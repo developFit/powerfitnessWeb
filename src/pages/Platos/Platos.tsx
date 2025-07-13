@@ -4,7 +4,7 @@ import {
   TextField, Typography, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow
 } from "@mui/material";
-import axios from "axios";
+import api from "../../services/api";
 
 interface Item {
   id: number;
@@ -30,7 +30,7 @@ const Platos = () => {
     const formData = new FormData();
     formData.append("archivo", file);
 
-    const response = await axios.post("http://localhost:8080/api/imagen-plato", formData, {
+    const response = await api.post("/api/imagen-plato", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
