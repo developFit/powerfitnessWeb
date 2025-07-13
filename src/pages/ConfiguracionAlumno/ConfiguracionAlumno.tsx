@@ -18,7 +18,7 @@ import {
   TableRow,
   CircularProgress,
 } from "@mui/material";
-import axios from "axios";
+import api from "../../services/api";
 
 interface AlumnoConfiguracion {
   idAlumno: number;
@@ -88,7 +88,7 @@ const ConfiguracionAlumno = () => {
       const resultados: AlumnoConfiguracion[] = [];
       for (let email of lista) {
         try {
-          const res = await axios.get(`http://localhost:8080/api/configuracionAlumno/${encodeURIComponent(email)}`);
+          const res = await api.get(`/api/configuracionAlumno/${encodeURIComponent(email)}`);
           resultados.push({ ...res.data, email, validado: false });
         } catch (err) {
           console.error(err);
