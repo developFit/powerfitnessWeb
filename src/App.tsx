@@ -16,8 +16,11 @@ import ProtectedLayout from "./ProtectedLayout";
 function App() {
   return (
     <Routes>
+      {/* Ruta p\u00fablica para el formulario de ingreso */}
       <Route path="/login" element={<Login />} />
-      <Route element={<ProtectedLayout />}> 
+
+      {/* Las dem\u00e1s rutas est\u00e1n protegidas y requieren token */}
+      <Route element={<ProtectedLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/alumnos" element={<Alumnos />} />
         <Route path="/ConfiguracionAlumnos" element={<ConfiguracionAlumno />} />

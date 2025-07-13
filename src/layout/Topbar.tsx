@@ -7,6 +7,7 @@ const Topbar = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    // Eliminamos el token almacenado y volvemos a la pantalla de login
     AuthService.logout();
     navigate("/login");
   };

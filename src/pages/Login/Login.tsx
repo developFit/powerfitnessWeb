@@ -11,10 +11,15 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     try {
+      // Llamamos al servicio de autenticación que guarda el token simulado
       await AuthService.login(username, password);
+
+      // Si el login es exitoso redirigimos al inicio protegido
       navigate('/');
     } catch (err) {
+      // Si algo falla mostramos un mensaje de error
       setError('Credenciales incorrectas');
     }
   };
