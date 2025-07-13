@@ -5,29 +5,57 @@ import {
   TableContainer, TableHead, TableRow, Tabs, Tab, Avatar, Grid
 } from "@mui/material";
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import AlumnosService from "../../services/AlumnosService";
 
 interface Item {
   id: number;
   nombre: string;
   email: string;
+  username: string;
+  password: string;
+  telefono: string;
 }
 
 const Alumnos = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [openForm, setOpenForm] = useState(false);
   const [openDetalle, setOpenDetalle] = useState(false);
-  const [nuevo, setNuevo] = useState<Item>({ id: 0, nombre: "", email: "" });
+  const [nuevo, setNuevo] = useState<Item>({
+    id: 0,
+    nombre: "",
+    email: "",
+    username: "",
+    password: "",
+    telefono: "",
+  });
   const [selectedAlumno, setSelectedAlumno] = useState<Item | null>(null);
   const [tabIndex, setTabIndex] = useState(0);
 
   const handleOpenForm = () => {
-    setNuevo({ id: 0, nombre: "", email: "" });
+    setNuevo({
+      id: 0,
+      nombre: "",
+      email: "",
+      username: "",
+      password: "",
+      telefono: "",
+    });
     setOpenForm(true);
   };
 
-  const handleGuardar = () => {
-    setItems([...items, { ...nuevo, id: items.length + 1 }]);
-    setOpenForm(false);
+  const handleGuardar = async () => {
+    try {
+      await AlumnosService.create({
+        nombre: nuevo.nombre,
+        email: nuevo.email,
+        username: nuevo.username,
+        password: nuevo.password,
+        telefono: nuevo.telefono,
+      });
+      setItems([...items, { ...nuevo, id: items.length + 1 }]);
+    } finally {
+      setOpenForm(false);
+    }
   };
 
   const handleVerDetalle = (alumno: Item) => {
@@ -75,10 +103,13 @@ const Alumnos = () => {
 
       <Dialog open={openForm} onClose={() => setOpenForm(false)}>
         <DialogTitle>Nuevo Alumno</DialogTitle>
-        <DialogContent>
-          <TextField fullWidth margin="dense" label="Nombre" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} />
-          <TextField fullWidth margin="dense" label="Email" value={nuevo.email} onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })} />
-        </DialogContent>
+      <DialogContent>
+        <TextField fullWidth margin="dense" label="Nombre" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} />
+        <TextField fullWidth margin="dense" label="Email" value={nuevo.email} onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })} />
+        <TextField fullWidth margin="dense" label="Usuario" value={nuevo.username} onChange={(e) => setNuevo({ ...nuevo, username: e.target.value })} />
+        <TextField fullWidth margin="dense" label="Contraseña" type="password" value={nuevo.password} onChange={(e) => setNuevo({ ...nuevo, password: e.target.value })} />
+        <TextField fullWidth margin="dense" label="Teléfono" value={nuevo.telefono} onChange={(e) => setNuevo({ ...nuevo, telefono: e.target.value })} />
+      </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenForm(false)}>Cancelar</Button>
           <Button variant="contained" onClick={handleGuardar}>Guardar</Button>
