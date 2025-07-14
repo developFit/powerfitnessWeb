@@ -18,6 +18,9 @@ import {
   TableRow,
   CircularProgress,
 } from "@mui/material";
+import CheckIcon from "@mui/icons-material/Check";
+import EditIcon from "@mui/icons-material/Edit";
+import TimelineIcon from "@mui/icons-material/Timeline";
 import api from "../../services/api";
 
 interface AlumnoConfiguracion {
@@ -33,6 +36,9 @@ interface AlumnoConfiguracion {
   datosAdicionales: string;
   email: string;
   validado: boolean;
+  rutina?: string;
+  plan?: string;
+  platos?: string[];
 }
 
 const ConfiguracionAlumno = () => {
@@ -41,8 +47,10 @@ const ConfiguracionAlumno = () => {
   const [loading, setLoading] = useState(false);
   const [rutina, setRutina] = useState("");
   const [plan, setPlan] = useState("");
-  const [plato, setPlato] = useState("");
-
+  const [platos, setPlatos] = useState<string[]>([]);
+  const [isEdit, setIsEdit] = useState(false);
+  const [progresoAlumno, setProgresoAlumno] = useState<AlumnoConfiguracion | null>(null);
+  
   useEffect(() => {
     const lista = [
       "enriquemoncerrat@gmail.com",
@@ -66,6 +74,9 @@ const ConfiguracionAlumno = () => {
       datosAdicionales: "Prefiere entrenar por la mañana",
       email: "enriquemoncerrat@gmail.com",
       validado: false,
+      rutina: "",
+      plan: "",
+      platos: [],
     },
     {
       idAlumno: 2,
@@ -80,6 +91,9 @@ const ConfiguracionAlumno = () => {
       datosAdicionales: "Dieta vegana",
       email: "maria@correo.com",
       validado: false,
+      rutina: "",
+      plan: "",
+      platos: [],
     },
   ];
 
@@ -103,20 +117,39 @@ const ConfiguracionAlumno = () => {
 
   const handleValidar = (alumno: AlumnoConfiguracion) => {
     setSelectedAlumno(alumno);
+    setIsEdit(false);
+    setRutina(alumno.rutina || "");
+    setPlan(alumno.plan || "");
+    setPlatos(alumno.platos || []);
+  };
+
+  const handleEditar = (alumno: AlumnoConfiguracion) => {
+    setSelectedAlumno(alumno);
+    setIsEdit(true);
+    setRutina(alumno.rutina || "");
+    setPlan(alumno.plan || "");
+    setPlatos(alumno.platos || []);
+  };
+
+  const handleVerProgreso = (alumno: AlumnoConfiguracion) => {
+    setProgresoAlumno(alumno);
   };
 
   const handleAsignar = () => {
     if (!selectedAlumno) return;
     console.log("Asignando rutina:", rutina);
     console.log("Asignando plan:", plan);
-    console.log("Asignando plato:", plato);
+    console.log("Asignando platos:", platos);
     setAlumnos((prev) =>
       prev.map((a) =>
         a.idAlumno === selectedAlumno.idAlumno
-          ? { ...a, validado: true }
+          ? { ...a, validado: true, rutina, plan, platos }
           : a
       )
     );
+    setRutina("");
+    setPlan("");
+    setPlatos([]);
     setSelectedAlumno(null);
   };
 
@@ -143,7 +176,19 @@ const ConfiguracionAlumno = () => {
                   <TableCell sx={{ color: "#fff" }}>{alumno.email}</TableCell>
                   <TableCell sx={{ color: "#fff" }}>{alumno.validado ? "Validado" : "Pendiente"}</TableCell>
                   <TableCell>
-                    {!alumno.validado && (
+                    {alumno.validado ? (
+                      <>
+                        <Button startIcon={<CheckIcon />} disabled color="success" variant="contained" sx={{ mr: 1 }}>
+                          Validado
+                        </Button>
+                        <Button onClick={() => handleEditar(alumno)} startIcon={<EditIcon />} color="warning" variant="outlined" sx={{ mr: 1 }}>
+                          Cambiar
+                        </Button>
+                        <Button onClick={() => handleVerProgreso(alumno)} startIcon={<TimelineIcon />} color="primary" variant="outlined">
+                          Progreso
+                        </Button>
+                      </>
+                    ) : (
                       <Button onClick={() => handleValidar(alumno)} color="warning" variant="contained">
                         Validar
                       </Button>
@@ -195,16 +240,32 @@ const ConfiguracionAlumno = () => {
             label="Platos sugeridos"
             fullWidth
             margin="dense"
-            value={plato}
-            onChange={(e) => setPlato(e.target.value)}
+            SelectProps={{ multiple: true }}
+            value={platos}
+            onChange={(e) =>
+              setPlatos(typeof e.target.value === "string" ? e.target.value.split(",") : (e.target.value as string[]))
+            }
           >
             <MenuItem value="plato1">Plato 1</MenuItem>
             <MenuItem value="plato2">Plato 2</MenuItem>
+            <MenuItem value="plato3">Plato 3</MenuItem>
           </TextField>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setSelectedAlumno(null)} color="inherit">Cancelar</Button>
-          <Button onClick={handleAsignar} color="warning" variant="contained">Validar y Asignar</Button>
+          <Button onClick={handleAsignar} color="warning" variant="contained">
+            {isEdit ? "Actualizar" : "Validar y Asignar"}
+          </Button>
+      </DialogActions>
+      </Dialog>
+
+      <Dialog open={!!progresoAlumno} onClose={() => setProgresoAlumno(null)}>
+        <DialogTitle>Progreso de {progresoAlumno?.nombreCompleto}</DialogTitle>
+        <DialogContent>
+          <Typography>Progreso no disponible en esta demo.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setProgresoAlumno(null)}>Cerrar</Button>
         </DialogActions>
       </Dialog>
     </Box>
