@@ -15,262 +15,269 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  IconButton,
-  Select,
-  MenuItem,
+  FormControl,
   InputLabel,
-  FormControl
+  Select,
+  MenuItem
 } from "@mui/material";
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import RutinasService from "../../services/RutinasService";
+import AlumnosService from "../../services/AlumnosService";
+import EjerciciosService from "../../services/EjerciciosService";
 
-interface Ejercicio {
+interface Alumno {
   id: number;
   nombre: string;
-  explicacion: string;
-  urlVideo: string;
 }
 
-interface EjercicioRonda {
-  idEjercicio: number;
-  tiempo: string;
-  repeticiones: number;
-  nivelEjercicio: string;
-  peso: number;
-}
-
-interface Ronda {
-  numeroRonda: number;
-  tiempo: string;
-  calorias: number;
-  ejerciciosDeRonda: EjercicioRonda[];
-}
-
-interface SeccionCorporal {
-  dia: string;
+interface EjercicioItem {
+  id: number;
   nombre: string;
-  tiempo: string;
-  calorias: number;
-  imagen: string;
-  rondas: Ronda[];
+}
+
+interface EjercicioRutina {
+  idEjercicio: number;
+  series: number;
+  repeticiones: number;
+  carga: string;
+  observaciones: string;
+}
+
+interface DiaRutina {
+  dia: string;
+  ejercicios: EjercicioRutina[];
 }
 
 interface Rutina {
-  id?: number;
-  emailAlumno: string;
-  nivelRutina: string;
-  activa?: boolean;
-  fechaAsignacion?: string;
-  seccionCorporalList: SeccionCorporal[];
+  idAlumno: number;
+  nombre: string;
+  objetivo: string;
+  diasPorSemana: string;
+  dias: DiaRutina[];
 }
 
-const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+const diasSemana = [
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
+  "Domingo",
+];
 
 const Rutinas = () => {
   const [items, setItems] = useState<Rutina[]>([]);
-  const [openRutina, setOpenRutina] = useState(false);
-  const [ejerciciosDisponibles, setEjerciciosDisponibles] = useState<Ejercicio[]>([]);
-  const [modoEdicion, setModoEdicion] = useState(false);
-  const [rutinaEditandoId, setRutinaEditandoId] = useState<number | null>(null);
-
+  const [open, setOpen] = useState(false);
+  const [alumnos, setAlumnos] = useState<Alumno[]>([]);
+  const [ejercicios, setEjercicios] = useState<EjercicioItem[]>([]);
   const [rutina, setRutina] = useState<Rutina>({
-    emailAlumno: "",
-    nivelRutina: "",
-    seccionCorporalList: diasSemana.map(dia => ({
-      dia,
-      nombre: "",
-      tiempo: "",
-      calorias: 0,
-      imagen: "",
-      rondas: []
-    }))
+    idAlumno: 0,
+    nombre: '',
+    objetivo: '',
+    diasPorSemana: '1',
+    dias: [{ dia: 'Lunes', ejercicios: [] }],
   });
 
   useEffect(() => {
-    setEjerciciosDisponibles([
-      { id: 1, nombre: "Sentadillas", explicacion: "Piernas", urlVideo: "https://youtu.be/xxx1" },
-      { id: 2, nombre: "Flexiones", explicacion: "Pecho", urlVideo: "https://youtu.be/xxx2" },
-      { id: 3, nombre: "Abdominales", explicacion: "Core", urlVideo: "https://youtu.be/xxx3" },
-    ]);
+    AlumnosService.getAll().then(r => setAlumnos(r.data));
+    EjerciciosService.getAll().then(r => setEjercicios(r.data));
   }, []);
 
-  const handleGuardarRutina = () => {
-    let nuevas: Rutina[];
-
-    if (modoEdicion && rutinaEditandoId != null) {
-      nuevas = items.map(r =>
-        r.id === rutinaEditandoId ? { ...rutina, id: rutinaEditandoId, activa: r.activa, fechaAsignacion: r.fechaAsignacion } : r
-      );
-    } else {
-      const actualizadas = items.map(r =>
-        r.emailAlumno === rutina.emailAlumno ? { ...r, activa: false } : r
-      );
-
-      const nueva: Rutina = {
-        ...rutina,
-        id: items.length + 1,
-        fechaAsignacion: new Date().toISOString().split('T')[0],
-        activa: true
-      };
-
-      nuevas = [...actualizadas, nueva];
-    }
-
-    setItems(nuevas);
-    setOpenRutina(false);
-    setModoEdicion(false);
-    setRutinaEditandoId(null);
+  const handleAgregarDia = () => {
+    setRutina(prev => ({
+      ...prev,
+      dias: [...prev.dias, { dia: 'Lunes', ejercicios: [] }],
+    }));
   };
 
-  const handleEditarRutina = (r: Rutina) => {
-    setRutina(r);
-    setModoEdicion(true);
-    setRutinaEditandoId(r.id ?? null);
-    setOpenRutina(true);
+  const handleAgregarEjercicio = (i: number) => {
+    const copy = { ...rutina };
+    copy.dias[i].ejercicios.push({
+      idEjercicio: 0,
+      series: 0,
+      repeticiones: 0,
+      carga: '',
+      observaciones: '',
+    });
+    setRutina(copy);
   };
 
-  const handleActivarRutina = (id: number) => {
-    const actualizadas = items.map(r => ({ ...r, activa: r.id === id }));
-    setItems(actualizadas);
-  };
-
-  const handleAgregarRonda = (i: number) => {
-    const updated = [...rutina.seccionCorporalList];
-    updated[i].rondas.push({ numeroRonda: updated[i].rondas.length + 1, tiempo: '', calorias: 0, ejerciciosDeRonda: [] });
-    setRutina({ ...rutina, seccionCorporalList: updated });
-  };
-
-  const handleAgregarEjercicio = (i: number, j: number) => {
-    const updated = [...rutina.seccionCorporalList];
-    updated[i].rondas[j].ejerciciosDeRonda.push({ idEjercicio: 0, tiempo: '', repeticiones: 0, nivelEjercicio: '', peso: 0 });
-    setRutina({ ...rutina, seccionCorporalList: updated });
+  const handleGuardar = async () => {
+    await RutinasService.create(rutina);
+    setItems([...items, rutina]);
+    setOpen(false);
+    setRutina({
+      idAlumno: 0,
+      nombre: '',
+      objetivo: '',
+      diasPorSemana: '1',
+      dias: [{ dia: 'Lunes', ejercicios: [] }],
+    });
   };
 
   return (
     <Box>
-      <Typography variant="h5">Gestión de Rutinas</Typography>
-      <Button variant="contained" onClick={() => setOpenRutina(true)}>Crear Nueva Rutina</Button>
+      <Typography variant="h5">Rutinas</Typography>
+      <Button variant="contained" onClick={() => setOpen(true)}>
+        Crear Rutina
+      </Button>
 
       <TableContainer component={Paper} sx={{ mt: 2 }}>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>Alumno</TableCell>
-              <TableCell>Nivel</TableCell>
-              <TableCell>Activa</TableCell>
-              <TableCell>Fecha</TableCell>
-              <TableCell>Acciones</TableCell>
+              <TableCell>Nombre</TableCell>
+              <TableCell>Objetivo</TableCell>
+              <TableCell>Días/Semana</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {items.map((r) => (
-              <TableRow key={r.id} sx={{ backgroundColor: r.activa ? '#e0f7fa' : 'inherit' }}>
-                <TableCell>{r.emailAlumno}</TableCell>
-                <TableCell>{r.nivelRutina}</TableCell>
-                <TableCell>{r.activa ? 'Sí' : 'No'}</TableCell>
-                <TableCell>{r.fechaAsignacion}</TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleEditarRutina(r)}><EditIcon /></IconButton>
-                  <Button size="small" onClick={() => handleActivarRutina(r.id!)}>Activar</Button>
-                </TableCell>
+            {items.map((r, idx) => (
+              <TableRow key={idx}>
+                <TableCell>{alumnos.find(a => a.id === r.idAlumno)?.nombre || r.idAlumno}</TableCell>
+                <TableCell>{r.nombre}</TableCell>
+                <TableCell>{r.objetivo}</TableCell>
+                <TableCell>{r.diasPorSemana}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
 
-      <Dialog open={openRutina} onClose={() => setOpenRutina(false)} maxWidth="lg" fullWidth>
-        <DialogTitle>{modoEdicion ? 'Editar Rutina' : 'Alta de Rutina Semanal'}</DialogTitle>
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="lg" fullWidth>
+        <DialogTitle>Nueva Rutina</DialogTitle>
         <DialogContent>
-          <TextField fullWidth label="Email del Alumno" value={rutina.emailAlumno} onChange={(e) => setRutina({ ...rutina, emailAlumno: e.target.value })} margin="dense" />
-          <TextField fullWidth label="Nivel de Rutina" value={rutina.nivelRutina} onChange={(e) => setRutina({ ...rutina, nivelRutina: e.target.value })} margin="dense" />
+          <FormControl fullWidth margin="dense">
+            <InputLabel>Alumno</InputLabel>
+            <Select
+              value={rutina.idAlumno}
+              onChange={e => setRutina({ ...rutina, idAlumno: Number(e.target.value) })}
+              label="Alumno"
+            >
+              {alumnos.map(a => (
+                <MenuItem key={a.id} value={a.id}>{a.nombre}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            fullWidth
+            label="Nombre"
+            margin="dense"
+            value={rutina.nombre}
+            onChange={e => setRutina({ ...rutina, nombre: e.target.value })}
+          />
+          <TextField
+            fullWidth
+            label="Objetivo"
+            margin="dense"
+            value={rutina.objetivo}
+            onChange={e => setRutina({ ...rutina, objetivo: e.target.value })}
+          />
+          <TextField
+            fullWidth
+            label="Días por Semana"
+            margin="dense"
+            value={rutina.diasPorSemana}
+            onChange={e => setRutina({ ...rutina, diasPorSemana: e.target.value })}
+          />
 
-          {rutina.seccionCorporalList.map((sec, i) => (
+          {rutina.dias.map((d, i) => (
             <Box key={i} sx={{ border: '1px solid #ccc', mt: 2, p: 2 }}>
-              <Typography variant="h6">{sec.dia}</Typography>
-              <TextField fullWidth label="Nombre Sección" value={sec.nombre} onChange={(e) => {
-                const copy = [...rutina.seccionCorporalList];
-                copy[i].nombre = e.target.value;
-                setRutina({ ...rutina, seccionCorporalList: copy });
-              }} margin="dense" />
-              <TextField fullWidth label="Tiempo Total" value={sec.tiempo} onChange={(e) => {
-                const copy = [...rutina.seccionCorporalList];
-                copy[i].tiempo = e.target.value;
-                setRutina({ ...rutina, seccionCorporalList: copy });
-              }} margin="dense" />
-              <TextField fullWidth label="Calorías" value={sec.calorias} onChange={(e) => {
-                const copy = [...rutina.seccionCorporalList];
-                copy[i].calorias = +e.target.value;
-                setRutina({ ...rutina, seccionCorporalList: copy });
-              }} margin="dense" />
-              <TextField fullWidth label="Imagen URL" value={sec.imagen} onChange={(e) => {
-                const copy = [...rutina.seccionCorporalList];
-                copy[i].imagen = e.target.value;
-                setRutina({ ...rutina, seccionCorporalList: copy });
-              }} margin="dense" />
-
-              {sec.rondas.map((ronda, j) => (
-                <Box key={j} sx={{ mt: 2 }}>
-                  <Typography variant="subtitle2">Ronda {ronda.numeroRonda}</Typography>
-                  <TextField fullWidth label="Tiempo" value={ronda.tiempo} onChange={(e) => {
-                    const copy = [...rutina.seccionCorporalList];
-                    copy[i].rondas[j].tiempo = e.target.value;
-                    setRutina({ ...rutina, seccionCorporalList: copy });
-                  }} margin="dense" />
-                  <TextField fullWidth label="Calorías" value={ronda.calorias} onChange={(e) => {
-                    const copy = [...rutina.seccionCorporalList];
-                    copy[i].rondas[j].calorias = +e.target.value;
-                    setRutina({ ...rutina, seccionCorporalList: copy });
-                  }} margin="dense" />
-
-                  {ronda.ejerciciosDeRonda.map((ej, k) => (
-                    <Box key={k} sx={{ pl: 2 }}>
-                      <FormControl fullWidth margin="dense">
-                        <InputLabel>Ejercicio</InputLabel>
-                        <Select value={ej.idEjercicio} onChange={(e) => {
-                          const copy = [...rutina.seccionCorporalList];
-                          copy[i].rondas[j].ejerciciosDeRonda[k].idEjercicio = +e.target.value;
-                          setRutina({ ...rutina, seccionCorporalList: copy });
-                        }}>
-                          {ejerciciosDisponibles.map(e => <MenuItem key={e.id} value={e.id}>{e.nombre}</MenuItem>)}
-                        </Select>
-                      </FormControl>
-                      <TextField fullWidth label="Tiempo" value={ej.tiempo} onChange={(e) => {
-                        const copy = [...rutina.seccionCorporalList];
-                        copy[i].rondas[j].ejerciciosDeRonda[k].tiempo = e.target.value;
-                        setRutina({ ...rutina, seccionCorporalList: copy });
-                      }} margin="dense" />
-                      <TextField fullWidth label="Repeticiones" value={ej.repeticiones} onChange={(e) => {
-                        const copy = [...rutina.seccionCorporalList];
-                        copy[i].rondas[j].ejerciciosDeRonda[k].repeticiones = +e.target.value;
-                        setRutina({ ...rutina, seccionCorporalList: copy });
-                      }} margin="dense" />
-                      <TextField fullWidth label="Nivel" value={ej.nivelEjercicio} onChange={(e) => {
-                        const copy = [...rutina.seccionCorporalList];
-                        copy[i].rondas[j].ejerciciosDeRonda[k].nivelEjercicio = e.target.value;
-                        setRutina({ ...rutina, seccionCorporalList: copy });
-                      }} margin="dense" />
-                      <TextField fullWidth label="Peso (kg)" value={ej.peso} onChange={(e) => {
-                        const copy = [...rutina.seccionCorporalList];
-                        copy[i].rondas[j].ejerciciosDeRonda[k].peso = +e.target.value;
-                        setRutina({ ...rutina, seccionCorporalList: copy });
-                      }} margin="dense" />
-                    </Box>
+              <FormControl fullWidth margin="dense">
+                <InputLabel>Día</InputLabel>
+                <Select
+                  value={d.dia}
+                  onChange={e => {
+                    const copy = { ...rutina };
+                    copy.dias[i].dia = String(e.target.value);
+                    setRutina(copy);
+                  }}
+                  label="Día"
+                >
+                  {diasSemana.map(ds => (
+                    <MenuItem key={ds} value={ds}>{ds}</MenuItem>
                   ))}
-                  <Button size="small" onClick={() => handleAgregarEjercicio(i, j)}>Agregar Ejercicio</Button>
+                </Select>
+              </FormControl>
+
+              {d.ejercicios.map((ej, j) => (
+                <Box key={j} sx={{ pl: 2, mt: 1 }}>
+                  <FormControl fullWidth margin="dense">
+                    <InputLabel>Ejercicio</InputLabel>
+                    <Select
+                      value={ej.idEjercicio}
+                      onChange={e => {
+                        const copy = { ...rutina };
+                        copy.dias[i].ejercicios[j].idEjercicio = Number(e.target.value);
+                        setRutina(copy);
+                      }}
+                      label="Ejercicio"
+                    >
+                      {ejercicios.map(ex => (
+                        <MenuItem key={ex.id} value={ex.id}>{ex.nombre}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    fullWidth
+                    label="Series"
+                    margin="dense"
+                    value={ej.series}
+                    onChange={e => {
+                      const copy = { ...rutina };
+                      copy.dias[i].ejercicios[j].series = Number(e.target.value);
+                      setRutina(copy);
+                    }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Repeticiones"
+                    margin="dense"
+                    value={ej.repeticiones}
+                    onChange={e => {
+                      const copy = { ...rutina };
+                      copy.dias[i].ejercicios[j].repeticiones = Number(e.target.value);
+                      setRutina(copy);
+                    }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Carga"
+                    margin="dense"
+                    value={ej.carga}
+                    onChange={e => {
+                      const copy = { ...rutina };
+                      copy.dias[i].ejercicios[j].carga = e.target.value;
+                      setRutina(copy);
+                    }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Observaciones"
+                    margin="dense"
+                    value={ej.observaciones}
+                    onChange={e => {
+                      const copy = { ...rutina };
+                      copy.dias[i].ejercicios[j].observaciones = e.target.value;
+                      setRutina(copy);
+                    }}
+                  />
                 </Box>
               ))}
-              <Button size="small" startIcon={<AddIcon />} onClick={() => handleAgregarRonda(i)}>
-                Agregar Ronda
+              <Button size="small" onClick={() => handleAgregarEjercicio(i)} startIcon={<AddIcon />}>
+                Agregar Ejercicio
               </Button>
             </Box>
           ))}
+          <Button size="small" onClick={handleAgregarDia} startIcon={<AddIcon />} sx={{ mt: 2 }}>
+            Agregar Día
+          </Button>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenRutina(false)}>Cancelar</Button>
-          <Button variant="contained" onClick={handleGuardarRutina}>Guardar</Button>
+          <Button onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button variant="contained" onClick={handleGuardar}>Guardar</Button>
         </DialogActions>
       </Dialog>
     </Box>
