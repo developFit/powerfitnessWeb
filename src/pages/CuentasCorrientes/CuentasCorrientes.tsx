@@ -1,71 +1,173 @@
 import React, { useState } from "react";
 import {
-  Box, Button, Dialog, DialogActions, DialogContent, DialogTitle,
-  TextField, Typography, Paper, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
 } from "@mui/material";
 
-interface Item {
+interface Pago {
   id: number;
-  monto: string;
+  descripcion: string;
+  monto: number;
   fecha: string;
-  detalle: string;
+}
+
+interface Alumno {
+  id: number;
+  nombre: string;
+  deuda: number;
+  pagos: Pago[];
 }
 
 const CuentasCorrientes = () => {
-  const [items, setItems] = useState<Item[]>([]);
-  const [open, setOpen] = useState(false);
-  const [nuevo, setNuevo] = useState<Item>({ id: 0, monto: "", fecha: "", detalle: "" });
+  const [alumnos] = useState<Alumno[]>([
+    {
+      id: 1,
+      nombre: "Juan Pérez",
+      deuda: 1500,
+      pagos: [
+        { id: 1, descripcion: "Cuota Enero", monto: 1000, fecha: "2024-01-05" },
+        { id: 2, descripcion: "Clase adicional", monto: 500, fecha: "2024-01-10" },
+      ],
+    },
+    {
+      id: 2,
+      nombre: "María Gómez",
+      deuda: 800,
+      pagos: [{ id: 1, descripcion: "Cuota Enero", monto: 1200, fecha: "2024-01-02" }],
+    },
+  ]);
+  const [openDetalle, setOpenDetalle] = useState(false);
+  const [selectedAlumno, setSelectedAlumno] = useState<Alumno | null>(null);
 
-  const handleOpen = () => {
-    setNuevo({ id: 0, monto: "", fecha: "", detalle: "" });
-    setOpen(true);
+  const handleVerDetalle = (alumno: Alumno) => {
+    setSelectedAlumno(alumno);
+    setOpenDetalle(true);
   };
 
-  const handleGuardar = () => {
-    setItems([...items, { ...nuevo, id: items.length + 1 }]);
-    setOpen(false);
-  };
+  const totalPagos = alumnos.reduce(
+    (acc, a) => acc + a.pagos.reduce((s, p) => s + p.monto, 0),
+    0
+  );
+  const totalDeudas = alumnos.reduce((acc, a) => acc + a.deuda, 0);
+  const totalPagadoAlumno = selectedAlumno
+    ? selectedAlumno.pagos.reduce((sum, p) => sum + p.monto, 0)
+    : 0;
 
   return (
     <Box>
-      <Typography variant="h5" gutterBottom>Gestión de CuentasCorrientes</Typography>
-      <Button variant="contained" color="warning" onClick={handleOpen}>
-        Nuevo CuentasCorrientes
-      </Button>
-      <TableContainer component={Paper}sx={{ mt: 2 }}>
+      <Typography variant="h5" gutterBottom color="orange">
+        Cuentas Corrientes
+      </Typography>
+
+      <Grid container spacing={2} mb={2}>
+        <Grid item xs={12} sm={6}>
+          <Card sx={{ backgroundColor: "#fff" }}>
+            <CardContent>
+              <Typography variant="subtitle1" color="#000">
+                Pagos Recibidos del Mes
+              </Typography>
+              <Typography variant="h5" color="#000">
+                ${totalPagos}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <Card sx={{ backgroundColor: "#fff" }}>
+            <CardContent>
+              <Typography variant="subtitle1" color="#000">
+                Deuda Total de Alumnos
+              </Typography>
+              <Typography variant="h5" color="#000">
+                ${totalDeudas}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      <TableContainer component={Paper} sx={{ mt: 2 }}>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>ID</TableCell>
-              <TableCell>Monto</TableCell>
-              <TableCell>Fecha</TableCell>
-              <TableCell>Detalle</TableCell>
+              <TableCell>Alumno</TableCell>
+              <TableCell>Deuda Mensual</TableCell>
+              <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {items.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.id}</TableCell>
-                <TableCell>{item.monto}</TableCell>
-                <TableCell>{item.fecha}</TableCell>
-                <TableCell>{item.detalle}</TableCell>
+            {alumnos.map((al) => (
+              <TableRow key={al.id}>
+                <TableCell>{al.id}</TableCell>
+                <TableCell>{al.nombre}</TableCell>
+                <TableCell>${al.deuda}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="outlined"
+                    color="warning"
+                    onClick={() => handleVerDetalle(al)}
+                  >
+                    Ver Detalle
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
 
-      <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>Nuevo CuentasCorrientes</DialogTitle>
+      <Dialog
+        open={openDetalle}
+        onClose={() => setOpenDetalle(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Detalle de {selectedAlumno?.nombre}</DialogTitle>
         <DialogContent>
-          <TextField fullWidth margin="dense" label="Monto" value={nuevo.monto} onChange={(e) => setNuevo({ ...nuevo, monto: e.target.value })} />
-          <TextField fullWidth margin="dense" label="Fecha" value={nuevo.fecha} onChange={(e) => setNuevo({ ...nuevo, fecha: e.target.value })} />
-          <TextField fullWidth margin="dense" label="Detalle" value={nuevo.detalle} onChange={(e) => setNuevo({ ...nuevo, detalle: e.target.value })} />
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Descripción</TableCell>
+                <TableCell>Monto</TableCell>
+                <TableCell>Fecha</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {selectedAlumno?.pagos.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell>{p.descripcion}</TableCell>
+                  <TableCell>${p.monto}</TableCell>
+                  <TableCell>{p.fecha}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <Box mt={2}>
+            <Typography variant="subtitle1" color="orange">
+              Total Pagado: ${totalPagadoAlumno}
+            </Typography>
+          </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button variant="contained" onClick={handleGuardar}>Guardar</Button>
+          <Button onClick={() => setOpenDetalle(false)} color="inherit">
+            Cerrar
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
