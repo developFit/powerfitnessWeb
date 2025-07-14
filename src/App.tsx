@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./layout/Layout";
 import Home from "./pages/Home/Home";
 import Alumnos from "./pages/Alumnos/Alumnos";
@@ -11,11 +11,13 @@ import AvancesNutricionales from "./pages/AvancesNutricionales/AvancesNutriciona
 import CuentasCorrientes from "./pages/CuentasCorrientes/CuentasCorrientes";
 import PlanesYCuotasPendientes from "./pages/PlanesYCuotasPendientes/PlanesYCuotasPendientes";
 import ConfiguracionAlumno from "./pages/ConfiguracionAlumno/ConfiguracionAlumno";
-
+import Login from "./pages/Login";
 function App() {
   return (
     <Layout>
       <Routes>
+        <Route path="/" element={<Navigate to="/login" />} />
+      <Route path="/login" element={<Login />} />
         <Route path="/" element={<Home />} />
         <Route path="/alumnos" element={<Alumnos />} />
        <Route path="/ConfiguracionAlumnos" element={<ConfiguracionAlumno />} />

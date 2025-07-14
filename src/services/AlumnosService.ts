@@ -1,26 +1,38 @@
 import axios from "axios";
 
-const API_URL = "/api/alumnos";
+// Add this type declaration to fix the error
+// Add global type augmentation for ImportMeta to fix the error
+declare global {
+  interface ImportMetaEnv {
+    VITE_API_URL: string;
+    // add other env variables if needed
+  }
 
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
+}
+
+const API_URL = import.meta.env.VITE_API_URL;
 class AlumnosService {
   getAll() {
     return axios.get(API_URL);
   }
 
-  getById(id: number) {
-    return axios.get(`{API_URL}/{id}`);
+  getByEmail(userEmail: string) {
+    return axios.get(`/api/alumno/${userEmail}`);
   }
 
   create(data: any) {
-    return axios.post(API_URL, data);
+    return axios.post(`${API_URL}/alumnos`);
   }
 
   update(id: number, data: any) {
-    return axios.put(`{API_URL}/{id}`, data);
+    return axios.put(`/api/alumno/${id}`, data);
   }
 
   delete(id: number) {
-    return axios.delete(`{API_URL}/{id}`);
+    return axios.delete(`/api/alumno/${id}`);
   }
 }
 

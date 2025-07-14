@@ -156,57 +156,98 @@ const ConfiguracionAlumno = () => {
         </TableContainer>
       )}
 
-      <Dialog open={!!selectedAlumno} onClose={() => setSelectedAlumno(null)} fullWidth maxWidth="md">
-        <DialogTitle>Validar información de {selectedAlumno?.nombreCompleto}</DialogTitle>
-        <DialogContent>
-          <Typography variant="subtitle1">Edad: {selectedAlumno?.edad} años</Typography>
-          <Typography variant="subtitle1">Altura: {selectedAlumno?.altura} cm</Typography>
-          <Typography variant="subtitle1">Peso: {selectedAlumno?.peso} kg</Typography>
-          <Typography variant="subtitle1">Objetivos: {selectedAlumno?.objetivos.join(", ")}</Typography>
-          <Typography variant="subtitle1">Actividad física: {selectedAlumno?.nivelDeActividadFisica}</Typography>
-          <Typography variant="subtitle1">Datos adicionales: {selectedAlumno?.datosAdicionales}</Typography>
+     <Dialog
+  open={!!selectedAlumno}
+  onClose={() => setSelectedAlumno(null)}
+  fullWidth
+  maxWidth="md"
+  PaperProps={{
+    sx: {
+      backgroundColor: "#1e1e1e",
+      color: "#fff",
+      borderRadius: 2,
+      boxShadow: 10,
+    },
+  }}
+>
+  <DialogTitle sx={{ color: "#FFA726", fontWeight: "bold" }}>
+    Validar información de {selectedAlumno?.nombreCompleto}
+  </DialogTitle>
+  <DialogContent>
+    <Typography sx={{ color: "#fff", mb: 1 }}>Edad: {selectedAlumno?.edad} años</Typography>
+    <Typography sx={{ color: "#fff", mb: 1 }}>Altura: {selectedAlumno?.altura} cm</Typography>
+    <Typography sx={{ color: "#fff", mb: 1 }}>Peso: {selectedAlumno?.peso} kg</Typography>
+    <Typography sx={{ color: "#fff", mb: 1 }}>Objetivos: {selectedAlumno?.objetivos.join(", ")}</Typography>
+    <Typography sx={{ color: "#fff", mb: 1 }}>Actividad física: {selectedAlumno?.nivelDeActividadFisica}</Typography>
+    <Typography sx={{ color: "#fff", mb: 2 }}>Datos adicionales: {selectedAlumno?.datosAdicionales}</Typography>
 
-          <TextField
-            select
-            label="Rutina personalizada"
-            fullWidth
-            margin="dense"
-            value={rutina}
-            onChange={(e) => setRutina(e.target.value)}
-          >
-            <MenuItem value="rutina1">Rutina 1</MenuItem>
-            <MenuItem value="rutina2">Rutina 2</MenuItem>
-          </TextField>
+    <TextField
+      select
+      label="Rutina personalizada"
+      fullWidth
+      margin="dense"
+      value={rutina}
+      onChange={(e) => setRutina(e.target.value)}
+      InputLabelProps={{ style: { color: "#FFA726" } }}
+      InputProps={{ style: { color: "#fff" } }}
+      sx={{ mb: 2 }}
+    >
+      <MenuItem value="rutina1">Rutina 1</MenuItem>
+      <MenuItem value="rutina2">Rutina 2</MenuItem>
+    </TextField>
 
-          <TextField
-            select
-            label="Plan nutricional"
-            fullWidth
-            margin="dense"
-            value={plan}
-            onChange={(e) => setPlan(e.target.value)}
-          >
-            <MenuItem value="plan1">Plan 1</MenuItem>
-            <MenuItem value="plan2">Plan 2</MenuItem>
-          </TextField>
+    <TextField
+      select
+      label="Plan nutricional"
+      fullWidth
+      margin="dense"
+      value={plan}
+      onChange={(e) => setPlan(e.target.value)}
+      InputLabelProps={{ style: { color: "#FFA726" } }}
+      InputProps={{ style: { color: "#fff" } }}
+      sx={{ mb: 2 }}
+    >
+      <MenuItem value="plan1">Plan 1</MenuItem>
+      <MenuItem value="plan2">Plan 2</MenuItem>
+    </TextField>
 
-          <TextField
-            select
-            label="Platos sugeridos"
-            fullWidth
-            margin="dense"
-            value={plato}
-            onChange={(e) => setPlato(e.target.value)}
-          >
-            <MenuItem value="plato1">Plato 1</MenuItem>
-            <MenuItem value="plato2">Plato 2</MenuItem>
-          </TextField>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSelectedAlumno(null)} color="inherit">Cancelar</Button>
-          <Button onClick={handleAsignar} color="warning" variant="contained">Validar y Asignar</Button>
-        </DialogActions>
-      </Dialog>
+    <TextField
+      select
+      label="Platos sugeridos"
+      fullWidth
+      margin="dense"
+      value={plato}
+      onChange={(e) => setPlato(e.target.value)}
+      InputLabelProps={{ style: { color: "#FFA726" } }}
+      InputProps={{ style: { color: "#fff" } }}
+    >
+      <MenuItem value="plato1">Plato 1</MenuItem>
+      <MenuItem value="plato2">Plato 2</MenuItem>
+    </TextField>
+  </DialogContent>
+  <DialogActions sx={{ px: 3, pb: 2 }}>
+    <Button
+      onClick={() => setSelectedAlumno(null)}
+      sx={{ color: "#ccc" }}
+    >
+      Cancelar
+    </Button>
+    <Button
+      onClick={handleAsignar}
+      variant="contained"
+      sx={{
+        backgroundColor: "#FFA726",
+        color: "#000",
+        fontWeight: "bold",
+        "&:hover": {
+          backgroundColor: "#ff9800",
+        },
+      }}
+    >
+      Validar y Asignar
+    </Button>
+  </DialogActions>
+</Dialog>
     </Box>
   );
 };

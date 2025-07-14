@@ -1,33 +1,65 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box, Button, Dialog, DialogActions, DialogContent, DialogTitle,
   TextField, Typography, Paper, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Tabs, Tab, Avatar, Grid
+  TableContainer, TableHead, TableRow, Tabs, Tab, Avatar
 } from "@mui/material";
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import AlumnosService from "../../services/AlumnosService";
 
 interface Item {
   id: number;
   nombre: string;
   email: string;
+  username: string;
+  password: string;
+  telefono: string;
 }
 
 const Alumnos = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [openForm, setOpenForm] = useState(false);
   const [openDetalle, setOpenDetalle] = useState(false);
-  const [nuevo, setNuevo] = useState<Item>({ id: 0, nombre: "", email: "" });
+  const [nuevo, setNuevo] = useState<Item>({
+    id: 0, nombre: "", email: "", username: "", password: "", telefono: ""
+  });
   const [selectedAlumno, setSelectedAlumno] = useState<Item | null>(null);
   const [tabIndex, setTabIndex] = useState(0);
 
+  useEffect(() => {
+    AlumnosService.getAll()
+      .then((response) => {
+        if (Array.isArray(response.data)) {
+          setItems(response.data);
+        } else {
+          console.error("La respuesta no es un array:", response.data);
+          setItems([]);
+        }
+      })
+      .catch((error) => {
+        console.error("Error al cargar alumnos:", error);
+        setItems([]);
+      });
+  }, []);
+
   const handleOpenForm = () => {
-    setNuevo({ id: 0, nombre: "", email: "" });
+    setNuevo({
+      id: 0, nombre: "", email: "", username: "", password: "", telefono: ""
+    });
     setOpenForm(true);
   };
 
   const handleGuardar = () => {
-    setItems([...items, { ...nuevo, id: items.length + 1 }]);
-    setOpenForm(false);
+     console.log("Datos a guardar:", nuevo);
+    AlumnosService.create(nuevo)
+      .then(() => AlumnosService.getAll())
+      .then((res) => {
+        setItems(res.data);
+        setOpenForm(false);
+      })
+      .catch((err) => {
+        console.error("Error al guardar:", err);
+      });
   };
 
   const handleVerDetalle = (alumno: Item) => {
@@ -48,7 +80,8 @@ const Alumnos = () => {
       <Button variant="contained" color="warning" onClick={handleOpenForm}>
         Nuevo Alumno
       </Button>
-      <TableContainer compozxczcnent={Paper} sx={{ mt: 2, backgroundColor: "#1e1e1e" }}>
+
+      <TableContainer component={Paper} sx={{ mt: 2, backgroundColor: "#1e1e1e" }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -73,63 +106,94 @@ const Alumnos = () => {
         </Table>
       </TableContainer>
 
-      <Dialog open={openForm} onClose={() => setOpenForm(false)}>
-        <DialogTitle>Nuevo Alumno</DialogTitle>
-        <DialogContent>
-          <TextField fullWidth margin="dense" label="Nombre" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} />
-          <TextField fullWidth margin="dense" label="Email" value={nuevo.email} onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })} />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenForm(false)}>Cancelar</Button>
-          <Button variant="contained" onClick={handleGuardar}>Guardar</Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={openDetalle} onClose={() => setOpenDetalle(false)} fullWidth maxWidth="md">
-        <DialogTitle>Detalle de {selectedAlumno?.nombre}</DialogTitle>
-        <DialogContent dividers>
-          <Tabs value={tabIndex} onChange={(_, v) => setTabIndex(v)}>
-            <Tab label="Progreso" />
-            <Tab label="Datos personales" />
-            <Tab label="Objetivos y Rutinas" />
-          </Tabs>
-          {tabIndex === 0 && (
-            <Box sx={{ mt: 2 }}>
-              <Typography color="orange" variant="subtitle1">Fotos de progreso</Typography>
-              <Box display="flex" gap={2} my={1}>
-                <Avatar src="/img/progreso1.jpg" sx={{ width: 80, height: 80 }} />
-                <Avatar src="/img/progreso2.jpg" sx={{ width: 80, height: 80 }} />
-              </Box>
-              <Typography color="orange" variant="subtitle1" sx={{ mt: 2 }}>Peso corporal</Typography>
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={pesoData}>
-                  <Line type="monotone" dataKey="peso" stroke="#FFA726" />
-                  <CartesianGrid stroke="#ccc" />
-                  <XAxis dataKey="mes" />
-                  <YAxis />
-                  <Tooltip />
-                </LineChart>
-              </ResponsiveContainer>
-            </Box>
-          )}
-          {tabIndex === 1 && (
-            <Box sx={{ mt: 2 }}>
-              <Typography color="orange">Nombre: {selectedAlumno?.nombre}</Typography>
-              <Typography color="orange">Email: {selectedAlumno?.email}</Typography>
-              {/* Agregar más info real si está disponible */}
-            </Box>
-          )}
-          {tabIndex === 2 && (
-            <Box sx={{ mt: 2 }}>
-              <Typography color="orange">Objetivos: Ganar masa muscular</Typography>
-              <Typography color="orange">Rutina asignada: Rutina A</Typography>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDetalle(false)} color="inherit">Cerrar</Button>
-        </DialogActions>
-      </Dialog>
+      {/* Dialogo para nuevo alumno */}
+      <Dialog
+  open={openForm}
+  onClose={() => setOpenForm(false)}
+  PaperProps={{
+    sx: {
+      backgroundColor: "#1e1e1e",
+      color: "#fff",
+      borderRadius: 2,
+      boxShadow: 10,
+    },
+  }}
+>
+  <DialogTitle sx={{ color: "#FFA726", fontWeight: "bold" }}>
+    Nuevo Alumno
+  </DialogTitle>
+  <DialogContent>
+    <TextField
+      fullWidth
+      margin="dense"
+      label="Nombre"
+      InputLabelProps={{ style: { color: "#FFA726" } }}
+      InputProps={{ style: { color: "#fff" } }}
+      value={nuevo.nombre}
+      onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })}
+      sx={{ input: { borderBottom: "1px solid #FFA726" } }}
+    />
+    <TextField
+      fullWidth
+      margin="dense"
+      label="Email"
+      InputLabelProps={{ style: { color: "#FFA726" } }}
+      InputProps={{ style: { color: "#fff" } }}
+      value={nuevo.email}
+      onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })}
+    />
+    <TextField
+      fullWidth
+      margin="dense"
+      label="Username"
+      InputLabelProps={{ style: { color: "#FFA726" } }}
+      InputProps={{ style: { color: "#fff" } }}
+      value={nuevo.username}
+      onChange={(e) => setNuevo({ ...nuevo, username: e.target.value })}
+    />
+    <TextField
+      fullWidth
+      margin="dense"
+      label="Contraseña"
+      type="password"
+      InputLabelProps={{ style: { color: "#FFA726" } }}
+      InputProps={{ style: { color: "#fff" } }}
+      value={nuevo.password}
+      onChange={(e) => setNuevo({ ...nuevo, password: e.target.value })}
+    />
+    <TextField
+      fullWidth
+      margin="dense"
+      label="Teléfono"
+      InputLabelProps={{ style: { color: "#FFA726" } }}
+      InputProps={{ style: { color: "#fff" } }}
+      value={nuevo.telefono}
+      onChange={(e) => setNuevo({ ...nuevo, telefono: e.target.value })}
+    />
+  </DialogContent>
+  <DialogActions sx={{ padding: 2 }}>
+    <Button
+      onClick={() => setOpenForm(false)}
+      sx={{ color: "#ccc" }}
+    >
+      Cancelar
+    </Button>
+    <Button
+      variant="contained"
+      onClick={handleGuardar}
+      sx={{
+        backgroundColor: "#FFA726",
+        color: "#000",
+        fontWeight: "bold",
+        "&:hover": {
+          backgroundColor: "#ff9800",
+        },
+      }}
+    >
+      Guardar
+    </Button>
+  </DialogActions>
+</Dialog>
     </Box>
   );
 };
