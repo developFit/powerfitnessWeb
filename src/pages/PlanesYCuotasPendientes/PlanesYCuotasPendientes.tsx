@@ -1,9 +1,22 @@
 import React, { useState } from "react";
 import {
-  Box, Button, Dialog, DialogActions, DialogContent, DialogTitle,
-  TextField, Typography, Paper, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+  Typography,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from "@mui/material";
+import { showError, showSuccess } from "../../utils/alerts";
 
 interface Item {
   id: number;
@@ -23,8 +36,13 @@ const PlanesYCuotasPendientes = () => {
   };
 
   const handleGuardar = () => {
-    setItems([...items, { ...nuevo, id: items.length + 1 }]);
-    setOpen(false);
+    try {
+      setItems([...items, { ...nuevo, id: items.length + 1 }]);
+      setOpen(false);
+      showSuccess('Plan guardado correctamente');
+    } catch (error) {
+      showError('Error al guardar plan');
+    }
   };
 
   return (
@@ -56,7 +74,13 @@ const PlanesYCuotasPendientes = () => {
         </Table>
       </TableContainer>
 
-      <Dialog open={open} onClose={() => setOpen(false)}>
+      <Dialog
+        open={open}
+        onClose={(e, r) => {
+          if (r === 'backdropClick' || r === 'escapeKeyDown') return;
+          setOpen(false);
+        }}
+      >
         <DialogTitle>Nuevo PlanesYCuotasPendientes</DialogTitle>
         <DialogContent>
           <TextField fullWidth margin="dense" label="Plan" value={nuevo.plan} onChange={(e) => setNuevo({ ...nuevo, plan: e.target.value })} />

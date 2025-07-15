@@ -6,6 +6,7 @@ import {
 } from "@mui/material";
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import AlumnosService from "../../services/AlumnosService";
+import { showError, showSuccess } from "../../utils/alerts";
 
 interface Item {
   id: number;
@@ -53,6 +54,9 @@ const Alumnos = () => {
         telefono: nuevo.telefono,
       });
       setItems([...items, { ...nuevo, id: items.length + 1 }]);
+      showSuccess('Alumno guardado correctamente');
+    } catch (error) {
+      showError('Error al guardar alumno');
     } finally {
       setOpenForm(false);
     }
@@ -101,7 +105,13 @@ const Alumnos = () => {
         </Table>
       </TableContainer>
 
-      <Dialog open={openForm} onClose={() => setOpenForm(false)}>
+      <Dialog
+        open={openForm}
+        onClose={(e, r) => {
+          if (r === 'backdropClick' || r === 'escapeKeyDown') return;
+          setOpenForm(false);
+        }}
+      >
         <DialogTitle>Nuevo Alumno</DialogTitle>
       <DialogContent>
         <TextField fullWidth margin="dense" label="Nombre" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} />
@@ -116,7 +126,15 @@ const Alumnos = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openDetalle} onClose={() => setOpenDetalle(false)} fullWidth maxWidth="md">
+      <Dialog
+        open={openDetalle}
+        onClose={(e, r) => {
+          if (r === 'backdropClick' || r === 'escapeKeyDown') return;
+          setOpenDetalle(false);
+        }}
+        fullWidth
+        maxWidth="md"
+      >
         <DialogTitle>Detalle de {selectedAlumno?.nombre}</DialogTitle>
         <DialogContent dividers>
           <Tabs value={tabIndex} onChange={(_, v) => setTabIndex(v)}>

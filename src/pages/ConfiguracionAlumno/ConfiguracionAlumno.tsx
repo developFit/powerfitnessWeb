@@ -201,7 +201,15 @@ const ConfiguracionAlumno = () => {
         </TableContainer>
       )}
 
-      <Dialog open={!!selectedAlumno} onClose={() => setSelectedAlumno(null)} fullWidth maxWidth="md">
+      <Dialog
+        open={!!selectedAlumno}
+        onClose={(e, r) => {
+          if (r === 'backdropClick' || r === 'escapeKeyDown') return;
+          setSelectedAlumno(null);
+        }}
+        fullWidth
+        maxWidth="md"
+      >
         <DialogTitle>Validar información de {selectedAlumno?.nombreCompleto}</DialogTitle>
         <DialogContent>
           <Typography variant="subtitle1">Edad: {selectedAlumno?.edad} años</Typography>
@@ -259,7 +267,13 @@ const ConfiguracionAlumno = () => {
       </DialogActions>
       </Dialog>
 
-      <Dialog open={!!progresoAlumno} onClose={() => setProgresoAlumno(null)}>
+      <Dialog
+        open={!!progresoAlumno}
+        onClose={(e, r) => {
+          if (r === 'backdropClick' || r === 'escapeKeyDown') return;
+          setProgresoAlumno(null);
+        }}
+      >
         <DialogTitle>Progreso de {progresoAlumno?.nombreCompleto}</DialogTitle>
         <DialogContent>
           <Typography>Progreso no disponible en esta demo.</Typography>

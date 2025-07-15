@@ -20,6 +20,7 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
+import { showError, showSuccess } from "../../utils/alerts";
 
 interface Asistencia {
   id: number;
@@ -50,8 +51,13 @@ const Asistencias = () => {
   };
 
   const handleGuardar = () => {
-    setAsistencias([...asistencias, { ...nueva, id: asistencias.length + 1 }]);
-    setOpen(false);
+    try {
+      setAsistencias([...asistencias, { ...nueva, id: asistencias.length + 1 }]);
+      setOpen(false);
+      showSuccess('Asistencia guardada correctamente');
+    } catch (error) {
+      showError('Error al guardar asistencia');
+    }
   };
 
   const filtered = asistencias.filter(
@@ -153,7 +159,13 @@ const Asistencias = () => {
         </Table>
       </TableContainer>
 
-      <Dialog open={open} onClose={() => setOpen(false)}>
+      <Dialog
+        open={open}
+        onClose={(e, r) => {
+          if (r === 'backdropClick' || r === 'escapeKeyDown') return;
+          setOpen(false);
+        }}
+      >
         <DialogTitle>Nueva Asistencia</DialogTitle>
         <DialogContent>
           <TextField

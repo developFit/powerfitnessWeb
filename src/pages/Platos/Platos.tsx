@@ -1,10 +1,23 @@
 import React, { useState } from "react";
 import {
-  Box, Button, Dialog, DialogActions, DialogContent, DialogTitle,
-  TextField, Typography, Paper, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+  Typography,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from "@mui/material";
 import api from "../../services/api";
+import { showError, showSuccess } from "../../utils/alerts";
 
 interface Item {
   id: number;
@@ -54,8 +67,9 @@ const Platos = () => {
       const nuevoPlato = { ...nuevo, imagen: urlImagen, id: items.length + 1 };
       setItems([...items, nuevoPlato]);
       setOpen(false);
+      showSuccess("Plato guardado correctamente");
     } catch (error) {
-      alert("Error al subir imagen o guardar plato");
+      showError("Error al subir imagen o guardar plato");
       console.error(error);
     }
   };
@@ -96,7 +110,13 @@ const Platos = () => {
         </Table>
       </TableContainer>
 
-      <Dialog open={open} onClose={() => setOpen(false)}>
+      <Dialog
+        open={open}
+        onClose={(e, r) => {
+          if (r === "backdropClick" || r === "escapeKeyDown") return;
+          setOpen(false);
+        }}
+      >
         <DialogTitle>Nuevo Plato</DialogTitle>
         <DialogContent>
           <TextField fullWidth margin="dense" label="Nombre" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} />
