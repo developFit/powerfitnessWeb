@@ -1,15 +1,47 @@
-# powerfitnessWeb
-backoffice admin de gym power fitness
+# PowerFitness Web
 
-## Environment Configuration
+Backoffice de administración del gimnasio **Power Fitness**.
 
-The application uses Vite environment files to configure the API base URL.
+## Requisitos previos
 
-Create `.env.local` for local development and `.env.production` for the
-production build. Each file should define `VITE_API_BASE_URL`:
+- [Node.js](https://nodejs.org/) 18 o superior
+- [npm](https://www.npmjs.com/)
 
-```
+## Configuración del entorno
+
+El proyecto utiliza ficheros de entorno de Vite para definir la URL base de la API.
+
+1. Crea un archivo `.env.local` para el desarrollo local y otro llamado `.env.production` para la versión de producción.
+2. En ambos define la variable `VITE_API_BASE_URL` con la URL correspondiente al backend.
+
+Ejemplo:
+
+```bash
 VITE_API_BASE_URL=http://localhost:8081
 ```
 
-Adjust the value in `.env.production` to match the production API endpoint.
+Ajusta el valor de `.env.production` para que apunte a la API real en producción.
+
+## Levantar el proyecto en local
+
+1. Instala las dependencias del proyecto:
+   ```bash
+   npm install
+   ```
+2. Asegúrate de que `.env.local` contenga el valor correcto de `VITE_API_BASE_URL`.
+3. Ejecuta el servidor de desarrollo:
+   ```bash
+   npm run dev
+   ```
+   Vite abrirá la aplicación en `http://localhost:5173` por defecto.
+
+## Desplegar a producción
+
+1. Configura `.env.production` con la URL de la API de producción.
+2. Genera los archivos listos para producción:
+   ```bash
+   npm run build
+   ```
+   El resultado se colocará en la carpeta `dist/`.
+3. Sirve el contenido de `dist/` con el servidor web de tu elección (por ejemplo Nginx o un servicio de alojamiento estático).
+4. Opcionalmente, puedes ejecutar `npm run preview` para comprobar localmente la compilación antes de publicarla.
