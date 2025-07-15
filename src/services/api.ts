@@ -1,7 +1,14 @@
 import axios from 'axios';
 
+// Cuando se ejecuta en modo desarrollo usamos "/api" para que Vite redireccione
+// las peticiones al backend definido en `VITE_API_BASE_URL` mediante su proxy.
+// En producción se utiliza directamente la URL proporcionada por la variable.
+const baseURL = import.meta.env.DEV
+  ? '/api'
+  : import.meta.env.VITE_API_BASE_URL || '';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || ''
+  baseURL
 });
 
 api.interceptors.request.use(config => {
