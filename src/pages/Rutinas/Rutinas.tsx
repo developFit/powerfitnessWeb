@@ -24,6 +24,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RutinasService from "../../services/RutinasService";
 import AlumnosService from "../../services/AlumnosService";
 import EjerciciosService from "../../services/EjerciciosService";
+import { showError, showSuccess } from "../../utils/alerts";
 
 interface Alumno {
   id: number;
@@ -104,16 +105,22 @@ const Rutinas = () => {
   };
 
   const handleGuardar = async () => {
-    await RutinasService.create(rutina);
-    setItems([...items, rutina]);
-    setOpen(false);
-    setRutina({
-      idAlumno: 0,
-      nombre: '',
-      objetivo: '',
-      diasPorSemana: '1',
-      dias: [{ dia: 'Lunes', ejercicios: [] }],
-    });
+    try {
+      await RutinasService.create(rutina);
+      setItems([...items, rutina]);
+      showSuccess('Rutina guardada correctamente');
+    } catch (error) {
+      showError('Error al guardar rutina');
+    } finally {
+      setOpen(false);
+      setRutina({
+        idAlumno: 0,
+        nombre: '',
+        objetivo: '',
+        diasPorSemana: '1',
+        dias: [{ dia: 'Lunes', ejercicios: [] }],
+      });
+    }
   };
 
   return (
@@ -146,7 +153,15 @@ const Rutinas = () => {
         </Table>
       </TableContainer>
 
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="lg" fullWidth>
+      <Dialog
+        open={open}
+        onClose={(e, r) => {
+          if (r === 'backdropClick' || r === 'escapeKeyDown') return;
+          setOpen(false);
+        }}
+        maxWidth="lg"
+        fullWidth
+      >
         <DialogTitle>Nueva Rutina</DialogTitle>
         <DialogContent>
           <FormControl fullWidth margin="dense">

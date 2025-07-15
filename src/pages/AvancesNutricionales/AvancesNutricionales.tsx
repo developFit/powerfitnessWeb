@@ -19,6 +19,7 @@ import {
   Card,
   CardContent
 } from "@mui/material";
+import { showError, showSuccess } from "../../utils/alerts";
 import {
   LineChart,
   Line,
@@ -74,8 +75,13 @@ const AvancesNutricionales = () => {
   };
 
   const handleGuardar = () => {
-    setItems([...items, { ...nuevo, id: items.length + 1 }]);
-    setOpen(false);
+    try {
+      setItems([...items, { ...nuevo, id: items.length + 1 }]);
+      setOpen(false);
+      showSuccess('Registro guardado correctamente');
+    } catch (error) {
+      showError('Error al guardar registro');
+    }
   };
 
   return (
@@ -194,7 +200,13 @@ const AvancesNutricionales = () => {
         </Grid>
       </Grid>
 
-      <Dialog open={open} onClose={() => setOpen(false)}>
+      <Dialog
+        open={open}
+        onClose={(e, r) => {
+          if (r === 'backdropClick' || r === 'escapeKeyDown') return;
+          setOpen(false);
+        }}
+      >
         <DialogTitle>Nuevo AvancesNutricionales</DialogTitle>
         <DialogContent>
           <TextField fullWidth margin="dense" label="Fecha" value={nuevo.fecha} onChange={(e) => setNuevo({ ...nuevo, fecha: e.target.value })} />

@@ -134,7 +134,10 @@ const CuentasCorrientes = () => {
 
       <Dialog
         open={openDetalle}
-        onClose={() => setOpenDetalle(false)}
+        onClose={(e, r) => {
+          if (r === 'backdropClick' || r === 'escapeKeyDown') return;
+          setOpenDetalle(false);
+        }}
         fullWidth
         maxWidth="sm"
       >
