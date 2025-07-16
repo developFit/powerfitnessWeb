@@ -20,7 +20,8 @@ const Login = () => {
       navigate('/');
     } catch (err) {
       // Si algo falla mostramos un mensaje de error
-      setError('Credenciales incorrectas');
+      const message = err instanceof Error ? err.message : 'Credenciales incorrectas';
+      setError(message);
     }
   };
 
