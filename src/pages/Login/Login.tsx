@@ -30,6 +30,9 @@ const Login = () => {
       <Card sx={{ width: 300 }}>
         <CardContent>
           <form onSubmit={handleSubmit}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <img src="/logo.svg" alt="Logo" style={{ height: 60 }} />
+            </Box>
             <Typography variant="h6" textAlign="center" sx={{ mb: 2 }}>Ingresar</Typography>
             <TextField label="Usuario" variant="outlined" fullWidth margin="normal" value={username} onChange={e => setUsername(e.target.value)} />
             <TextField label="Contrase\u00f1a" type="password" variant="outlined" fullWidth margin="normal" value={password} onChange={e => setPassword(e.target.value)} />
