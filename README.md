@@ -22,10 +22,9 @@ VITE_API_BASE_URL=http://localhost:8080
 
 Ajusta el valor de `.env.production` para que apunte a la API real en producción.
 
-Durante el desarrollo, la configuración de Vite incluye un *proxy* que redirige
-las peticiones a rutas que empiecen por `/api` hacia la URL definida en
-`VITE_API_BASE_URL`. Esto evita los problemas de CORS mientras trabajas en
-local.
+Durante el desarrollo la aplicación se comunica directamente con la URL
+especificada en `VITE_API_BASE_URL`, por lo que es necesario que dicho backend
+esté accesible.
 
 ## Levantar el proyecto en local
 
