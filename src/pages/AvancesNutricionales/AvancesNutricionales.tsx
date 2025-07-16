@@ -45,11 +45,12 @@ const AvancesNutricionales = () => {
   const [nuevo, setNuevo] = useState<Item>({ id: 0, fecha: "", peso: "", grasaCorporal: "" });
   const [alumno, setAlumno] = useState("");
 
-  const pesoData = [
-    { fecha: "Ene", peso: 80 },
-    { fecha: "Feb", peso: 78 },
-    { fecha: "Mar", peso: 76 },
-    { fecha: "Abr", peso: 74 }
+  // Datos de ejemplo para mostrar la mejora en press de banca
+  const fuerzaData = [
+    { fecha: "Ene", pressBanca: 60 },
+    { fecha: "Feb", pressBanca: 65 },
+    { fecha: "Mar", pressBanca: 70 },
+    { fecha: "Abr", pressBanca: 75 }
   ];
 
   const rmData = [
@@ -126,15 +127,15 @@ const AvancesNutricionales = () => {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Reducción de Peso
+                Progreso Press de Banca
               </Typography>
               <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={pesoData}>
+                <LineChart data={fuerzaData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#ccc" />
                   <XAxis dataKey="fecha" />
                   <YAxis />
                   <Tooltip />
-                  <Line type="monotone" dataKey="peso" stroke="#FFA726" />
+                  <Line type="monotone" dataKey="pressBanca" stroke="#FFA726" />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
