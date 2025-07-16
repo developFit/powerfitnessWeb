@@ -8,7 +8,7 @@ class PlanesNutricionalesService {
   }
 
   getById(id: number) {
-    return axios.get(`{API_URL}/{id}`);
+    return axios.get(`${API_URL}/${id}`);
   }
 
   create(data: any) {
@@ -16,11 +16,11 @@ class PlanesNutricionalesService {
   }
 
   update(id: number, data: any) {
-    return axios.put(`{API_URL}/{id}`, data);
+    return axios.put(`${API_URL}/${id}`, data);
   }
 
   delete(id: number) {
-    return axios.delete(`{API_URL}/{id}`);
+    return axios.delete(`${API_URL}/${id}`);
   }
 }
 
