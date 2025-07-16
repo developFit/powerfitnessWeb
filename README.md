@@ -40,6 +40,11 @@ local.
    ```
    Vite abrirá la aplicación en `http://localhost:5173` por defecto.
 
+## Acceso al sistema
+
+Por simplicidad, la aplicación permite ingresar únicamente con el usuario `admin`.
+Puedes utilizar cualquier contraseña y se generará un token simulado para esa sesión.
+
 ## Desplegar a producción
 
 1. Configura `.env.production` con la URL de la API de producción.
