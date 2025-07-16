@@ -143,6 +143,16 @@ const CuentasCorrientes = () => {
       >
         <DialogTitle>Detalle de {selectedAlumno?.nombre}</DialogTitle>
         <DialogContent>
+          {selectedAlumno && (
+            <Box mb={2}>
+              <Typography variant="body1" color="textSecondary">
+                Deuda Mensual: ${selectedAlumno.deuda}
+              </Typography>
+              <Typography variant="body1" color="textSecondary">
+                Total Pagado: ${totalPagadoAlumno}
+              </Typography>
+            </Box>
+          )}
           <Table>
             <TableHead>
               <TableRow>
@@ -161,11 +171,6 @@ const CuentasCorrientes = () => {
               ))}
             </TableBody>
           </Table>
-          <Box mt={2}>
-            <Typography variant="subtitle1" color="orange">
-              Total Pagado: ${totalPagadoAlumno}
-            </Typography>
-          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDetalle(false)} color="inherit">
