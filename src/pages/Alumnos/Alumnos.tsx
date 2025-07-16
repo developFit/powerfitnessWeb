@@ -67,11 +67,12 @@ const Alumnos = () => {
     setOpenDetalle(true);
   };
 
-  const pesoData = [
-    { mes: "Ene", peso: 75 },
-    { mes: "Feb", peso: 74 },
-    { mes: "Mar", peso: 72 },
-    { mes: "Abr", peso: 71 },
+  // Datos de ejemplo para mostrar la evolución de fuerza en press de banca
+  const fuerzaData = [
+    { mes: "Ene", pressBanca: 60 },
+    { mes: "Feb", pressBanca: 65 },
+    { mes: "Mar", pressBanca: 70 },
+    { mes: "Abr", pressBanca: 75 },
   ];
 
   return (
@@ -149,10 +150,10 @@ const Alumnos = () => {
                 <Avatar src="/img/progreso1.jpg" sx={{ width: 80, height: 80 }} />
                 <Avatar src="/img/progreso2.jpg" sx={{ width: 80, height: 80 }} />
               </Box>
-              <Typography color="orange" variant="subtitle1" sx={{ mt: 2 }}>Peso corporal</Typography>
+              <Typography color="orange" variant="subtitle1" sx={{ mt: 2 }}>Press de banca</Typography>
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={pesoData}>
-                  <Line type="monotone" dataKey="peso" stroke="#FFA726" />
+                <LineChart data={fuerzaData}>
+                  <Line type="monotone" dataKey="pressBanca" stroke="#FFA726" />
                   <CartesianGrid stroke="#ccc" />
                   <XAxis dataKey="mes" />
                   <YAxis />
