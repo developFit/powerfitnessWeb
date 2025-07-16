@@ -4,6 +4,7 @@ import Home from "./pages/Home/Home";
 import Alumnos from "./pages/Alumnos/Alumnos";
 import Rutinas from "./pages/Rutinas/Rutinas";
 import Platos from "./pages/Platos/Platos";
+import Ejercicios from "./pages/Ejercicios/Ejercicios";
 import PlanesNutricionales from "./pages/PlanesNutricionales/PlanesNutricionales";
 import Asistencias from "./pages/Asistencias/Asistencias";
 import AvancesNutricionales from "./pages/AvancesNutricionales/AvancesNutricionales";
@@ -26,6 +27,7 @@ function App() {
         <Route path="/ConfiguracionAlumnos" element={<ConfiguracionAlumno />} />
         <Route path="/rutinas" element={<Rutinas />} />
         <Route path="/platos" element={<Platos />} />
+        <Route path="/ejercicios" element={<Ejercicios />} />
         <Route path="/planes" element={<PlanesNutricionales />} />
         <Route path="/asistencias" element={<Asistencias />} />
         <Route path="/avances" element={<AvancesNutricionales />} />
