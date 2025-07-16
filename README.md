@@ -17,7 +17,7 @@ El proyecto utiliza ficheros de entorno de Vite para definir la URL base de la A
 Ejemplo:
 
 ```bash
-VITE_API_BASE_URL=http://localhost:8081
+VITE_API_BASE_URL=http://localhost:8080
 ```
 
 Ajusta el valor de `.env.production` para que apunte a la API real en producción.
