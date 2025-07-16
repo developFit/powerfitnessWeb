@@ -38,6 +38,7 @@ interface EjercicioItem {
 
 interface EjercicioRutina {
   idEjercicio: number;
+  grupoMuscular: string;
   series: number;
   repeticiones: number;
   carga: string;
@@ -65,6 +66,16 @@ const diasSemana = [
   "Viernes",
   "Sábado",
   "Domingo",
+];
+
+const gruposMusculares = [
+  "Pecho",
+  "Espalda",
+  "Piernas",
+  "Hombros",
+  "Bíceps",
+  "Tríceps",
+  "Abdominales",
 ];
 
 const Rutinas = () => {
@@ -96,6 +107,7 @@ const Rutinas = () => {
     const copy = { ...rutina };
     copy.dias[i].ejercicios.push({
       idEjercicio: 0,
+      grupoMuscular: gruposMusculares[0],
       series: 0,
       repeticiones: 0,
       carga: '',
@@ -219,6 +231,22 @@ const Rutinas = () => {
 
               {d.ejercicios.map((ej, j) => (
                 <Box key={j} sx={{ pl: 2, mt: 1 }}>
+                  <FormControl fullWidth margin="dense">
+                    <InputLabel>Grupo Muscular</InputLabel>
+                    <Select
+                      value={ej.grupoMuscular}
+                      onChange={e => {
+                        const copy = { ...rutina };
+                        copy.dias[i].ejercicios[j].grupoMuscular = String(e.target.value);
+                        setRutina(copy);
+                      }}
+                      label="Grupo Muscular"
+                    >
+                      {gruposMusculares.map(gm => (
+                        <MenuItem key={gm} value={gm}>{gm}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                   <FormControl fullWidth margin="dense">
                     <InputLabel>Ejercicio</InputLabel>
                     <Select
