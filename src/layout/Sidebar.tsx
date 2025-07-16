@@ -15,6 +15,7 @@ import HomeIcon from "@mui/icons-material/Home";
 import PeopleIcon from "@mui/icons-material/People";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import FastfoodIcon from "@mui/icons-material/Fastfood";
+import SportsGymnasticsIcon from "@mui/icons-material/SportsGymnastics";
 import EventIcon from "@mui/icons-material/Event";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
@@ -56,6 +57,10 @@ const SidebarResponsive = () => {
         <ListItem button component={Link} to="/rutinas">
           <ListItemIcon><FitnessCenterIcon sx={{ color: "#FFA726" }} /></ListItemIcon>
           <ListItemText primary="Rutinas" primaryTypographyProps={{ sx: { color: "#ffff" } }} />
+        </ListItem>
+        <ListItem button component={Link} to="/ejercicios">
+          <ListItemIcon><SportsGymnasticsIcon sx={{ color: "#FFA726" }} /></ListItemIcon>
+          <ListItemText primary="Ejercicios" primaryTypographyProps={{ sx: { color: "#ffff" } }} />
         </ListItem>
         <ListItem button component={Link} to="/platos">
           <ListItemIcon><FastfoodIcon sx={{ color: "#FFA726" }} /></ListItemIcon>
