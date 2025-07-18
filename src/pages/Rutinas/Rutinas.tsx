@@ -117,9 +117,21 @@ const Rutinas = () => {
   };
 
   const handleGuardar = async () => {
+    const payload: Rutina = {
+      ...rutina,
+      idAlumno: Number(rutina.idAlumno),
+      dias: rutina.dias.map(d => ({
+        ...d,
+        ejercicios: d.ejercicios.map(e => ({
+          ...e,
+          idEjercicio: Number(e.idEjercicio)
+        }))
+      }))
+    };
+
     try {
-      await RutinasService.create(rutina);
-      setItems([...items, rutina]);
+      await RutinasService.create(payload);
+      setItems([...items, payload]);
       showSuccess('Rutina guardada correctamente');
     } catch (error) {
       showError('Error al guardar rutina');
@@ -179,10 +191,16 @@ const Rutinas = () => {
           <FormControl fullWidth margin="dense">
             <InputLabel>Alumno</InputLabel>
             <Select
-              value={rutina.idAlumno}
-              onChange={e => setRutina({ ...rutina, idAlumno: Number(e.target.value) })}
+              value={rutina.idAlumno || ''}
+              onChange={e => {
+                const val = e.target.value;
+                setRutina({ ...rutina, idAlumno: val === '' ? 0 : Number(val) });
+              }}
               label="Alumno"
             >
+              <MenuItem value="">
+                <em>Seleccione un alumno</em>
+              </MenuItem>
               {alumnos.map(a => (
                 <MenuItem key={a.id} value={a.id}>{a.nombre}</MenuItem>
               ))}
@@ -250,14 +268,18 @@ const Rutinas = () => {
                   <FormControl fullWidth margin="dense">
                     <InputLabel>Ejercicio</InputLabel>
                     <Select
-                      value={ej.idEjercicio}
+                      value={ej.idEjercicio || ''}
                       onChange={e => {
+                        const val = e.target.value;
                         const copy = { ...rutina };
-                        copy.dias[i].ejercicios[j].idEjercicio = Number(e.target.value);
+                        copy.dias[i].ejercicios[j].idEjercicio = val === '' ? 0 : Number(val);
                         setRutina(copy);
                       }}
                       label="Ejercicio"
                     >
+                      <MenuItem value="">
+                        <em>Seleccione un ejercicio</em>
+                      </MenuItem>
                       {ejercicios.map(ex => (
                         <MenuItem key={ex.id} value={ex.id}>{ex.nombre}</MenuItem>
                       ))}
