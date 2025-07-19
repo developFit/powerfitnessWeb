@@ -25,6 +25,7 @@ import RutinasService from "../../services/RutinasService";
 import AlumnosService from "../../services/AlumnosService";
 import EjerciciosService from "../../services/EjerciciosService";
 import { showError, showSuccess } from "../../utils/alerts";
+import { toNumberOrZero } from "../../utils/number";
 
 interface Alumno {
   idAlumno: number;
@@ -135,7 +136,7 @@ const Rutinas = () => {
         ejercicios: d.ejercicios.map(e => ({
           ...e,
           // Ensure we never send NaN which would be serialized as null
-          idEjercicio: isNaN(Number(e.idEjercicio)) ? 0 : Number(e.idEjercicio)
+          idEjercicio: toNumberOrZero(e.idEjercicio)
         }))
       }))
     };
@@ -303,7 +304,7 @@ const Rutinas = () => {
                           copy.dias[i].ejercicios = [...copy.dias[i].ejercicios];
                           copy.dias[i].ejercicios[j] = {
                             ...copy.dias[i].ejercicios[j],
-                            idEjercicio: val === '' ? 0 : Number(val)
+                            idEjercicio: toNumberOrZero(val)
                           };
                           return copy;
                         });
