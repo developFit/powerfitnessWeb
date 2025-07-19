@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Button, Card, CardContent, TextField, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import AuthService from '../../services/AuthService';
+import logo from '../../assets/logo.svg';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -31,7 +32,7 @@ const Login = () => {
         <CardContent>
           <form onSubmit={handleSubmit}>
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-              <img src="/logo.svg" alt="Logo" style={{ height: 60 }} />
+              <img src={logo} alt="Logo" style={{ height: 60 }} />
             </Box>
             <Typography variant="h6" textAlign="center" sx={{ mb: 2 }}>Ingresar</Typography>
             <TextField label="Usuario" variant="outlined" fullWidth margin="normal" value={username} onChange={e => setUsername(e.target.value)} />
