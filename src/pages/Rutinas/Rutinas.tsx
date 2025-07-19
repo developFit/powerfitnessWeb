@@ -128,7 +128,8 @@ const Rutinas = () => {
         ...d,
         ejercicios: d.ejercicios.map(e => ({
           ...e,
-          idEjercicio: Number(e.idEjercicio)
+          // Ensure we never send NaN which would be serialized as null
+          idEjercicio: isNaN(Number(e.idEjercicio)) ? 0 : Number(e.idEjercicio)
         }))
       }))
     };
