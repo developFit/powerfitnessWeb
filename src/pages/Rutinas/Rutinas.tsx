@@ -27,7 +27,7 @@ import EjerciciosService from "../../services/EjerciciosService";
 import { showError, showSuccess } from "../../utils/alerts";
 
 interface Alumno {
-  id: number;
+  idAlumno: number;
   nombre: string;
 }
 
@@ -171,7 +171,7 @@ const Rutinas = () => {
           <TableBody>
             {items.map((r, idx) => (
               <TableRow key={idx}>
-                <TableCell>{alumnos.find(a => a.id === r.idAlumno)?.nombre || r.idAlumno}</TableCell>
+                <TableCell>{alumnos.find(a => a.idAlumno === r.idAlumno)?.nombre || r.idAlumno}</TableCell>
                 <TableCell>{r.nombre}</TableCell>
                 <TableCell>{r.objetivo}</TableCell>
                 <TableCell>{r.diasPorSemana}</TableCell>
@@ -206,7 +206,7 @@ const Rutinas = () => {
                 <em>Seleccione un alumno</em>
               </MenuItem>
               {alumnos.map(a => (
-                <MenuItem key={a.id} value={a.id}>{a.nombre}</MenuItem>
+                <MenuItem key={a.idAlumno} value={a.idAlumno}>{a.nombre}</MenuItem>
               ))}
             </Select>
           </FormControl>
