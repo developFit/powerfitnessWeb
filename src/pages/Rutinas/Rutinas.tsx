@@ -135,7 +135,7 @@ const Rutinas = () => {
         ...d,
         ejercicios: d.ejercicios.map(e => ({
           ...e,
-          // Ensure we never send NaN which would be serialized as null
+          // Convert any string value to number and default to 0 if invalid
           idEjercicio: toNumberOrZero(e.idEjercicio)
         }))
       }))
@@ -302,9 +302,10 @@ const Rutinas = () => {
                           copy.dias = [...prev.dias];
                           copy.dias[i] = { ...copy.dias[i] };
                           copy.dias[i].ejercicios = [...copy.dias[i].ejercicios];
+                          const parsed = parseInt(val as string, 10);
                           copy.dias[i].ejercicios[j] = {
                             ...copy.dias[i].ejercicios[j],
-                            idEjercicio: val === '' ? 0 : Number(val)
+                            idEjercicio: Number.isNaN(parsed) ? 0 : parsed
                           };
                           return copy;
                         });
