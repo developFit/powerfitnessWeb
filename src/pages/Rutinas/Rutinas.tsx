@@ -108,8 +108,9 @@ const Rutinas = () => {
 
   const handleAgregarEjercicio = (i: number) => {
     const copy = { ...rutina };
+    const firstEjercicio = ejercicios[0]?.id ?? 0;
     copy.dias[i].ejercicios.push({
-      idEjercicio: 0,
+      idEjercicio: firstEjercicio,
       grupoMuscular: gruposMusculares[0],
       series: 0,
       repeticiones: 0,
@@ -272,7 +273,7 @@ const Rutinas = () => {
                   <FormControl fullWidth margin="dense">
                     <InputLabel>Ejercicio</InputLabel>
                     <Select
-                      value={ej.idEjercicio || ''}
+                      value={ej.idEjercicio}
                       onChange={e => {
                         const val = e.target.value;
                         const copy = { ...rutina };
