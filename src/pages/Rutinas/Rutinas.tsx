@@ -32,7 +32,7 @@ interface Alumno {
 }
 
 interface EjercicioItem {
-  id: number;
+  id: number | string;
   nombre: string;
 }
 
@@ -107,16 +107,23 @@ const Rutinas = () => {
   };
 
   const handleAgregarEjercicio = (i: number) => {
-    const copy = { ...rutina };
-    copy.dias[i].ejercicios.push({
-      idEjercicio: 0,
-      grupoMuscular: gruposMusculares[0],
-      series: 0,
-      repeticiones: 0,
-      carga: '',
-      observaciones: '',
+    setRutina(prev => {
+      const copy = { ...prev };
+      copy.dias = [...prev.dias];
+      copy.dias[i] = { ...copy.dias[i] };
+      copy.dias[i].ejercicios = [
+        ...copy.dias[i].ejercicios,
+        {
+          idEjercicio: 0,
+          grupoMuscular: gruposMusculares[0],
+          series: 0,
+          repeticiones: 0,
+          carga: '',
+          observaciones: '',
+        },
+      ];
+      return copy;
     });
-    setRutina(copy);
   };
 
   const handleGuardar = async () => {
@@ -240,9 +247,13 @@ const Rutinas = () => {
                 <Select
                   value={d.dia}
                   onChange={e => {
-                    const copy = { ...rutina };
-                    copy.dias[i].dia = String(e.target.value);
-                    setRutina(copy);
+                    const val = String(e.target.value);
+                    setRutina(prev => {
+                      const copy = { ...prev };
+                      copy.dias = [...prev.dias];
+                      copy.dias[i] = { ...copy.dias[i], dia: val };
+                      return copy;
+                    });
                   }}
                   label="Día"
                 >
@@ -259,9 +270,18 @@ const Rutinas = () => {
                     <Select
                       value={ej.grupoMuscular}
                       onChange={e => {
-                        const copy = { ...rutina };
-                        copy.dias[i].ejercicios[j].grupoMuscular = String(e.target.value);
-                        setRutina(copy);
+                        const val = String(e.target.value);
+                        setRutina(prev => {
+                          const copy = { ...prev };
+                          copy.dias = [...prev.dias];
+                          copy.dias[i] = { ...copy.dias[i] };
+                          copy.dias[i].ejercicios = [...copy.dias[i].ejercicios];
+                          copy.dias[i].ejercicios[j] = {
+                            ...copy.dias[i].ejercicios[j],
+                            grupoMuscular: val,
+                          };
+                          return copy;
+                        });
                       }}
                       label="Grupo Muscular"
                     >
@@ -273,7 +293,7 @@ const Rutinas = () => {
                   <FormControl fullWidth margin="dense">
                     <InputLabel>Ejercicio</InputLabel>
                     <Select
-                      value={ej.idEjercicio}
+                      value={ej.idEjercicio || ''}
                       onChange={e => {
                         const val = e.target.value;
                         setRutina(prev => {
@@ -294,7 +314,7 @@ const Rutinas = () => {
                         <em>Seleccione un ejercicio</em>
                       </MenuItem>
                       {ejercicios.map(ex => (
-                        <MenuItem key={ex.id} value={ex.id}>{ex.nombre}</MenuItem>
+                        <MenuItem key={ex.id} value={Number(ex.id)}>{ex.nombre}</MenuItem>
                       ))}
                     </Select>
                   </FormControl>
@@ -304,9 +324,18 @@ const Rutinas = () => {
                     margin="dense"
                     value={ej.series}
                     onChange={e => {
-                      const copy = { ...rutina };
-                      copy.dias[i].ejercicios[j].series = Number(e.target.value);
-                      setRutina(copy);
+                      const val = Number(e.target.value);
+                      setRutina(prev => {
+                        const copy = { ...prev };
+                        copy.dias = [...prev.dias];
+                        copy.dias[i] = { ...copy.dias[i] };
+                        copy.dias[i].ejercicios = [...copy.dias[i].ejercicios];
+                        copy.dias[i].ejercicios[j] = {
+                          ...copy.dias[i].ejercicios[j],
+                          series: val,
+                        };
+                        return copy;
+                      });
                     }}
                   />
                   <TextField
@@ -315,9 +344,18 @@ const Rutinas = () => {
                     margin="dense"
                     value={ej.repeticiones}
                     onChange={e => {
-                      const copy = { ...rutina };
-                      copy.dias[i].ejercicios[j].repeticiones = Number(e.target.value);
-                      setRutina(copy);
+                      const val = Number(e.target.value);
+                      setRutina(prev => {
+                        const copy = { ...prev };
+                        copy.dias = [...prev.dias];
+                        copy.dias[i] = { ...copy.dias[i] };
+                        copy.dias[i].ejercicios = [...copy.dias[i].ejercicios];
+                        copy.dias[i].ejercicios[j] = {
+                          ...copy.dias[i].ejercicios[j],
+                          repeticiones: val,
+                        };
+                        return copy;
+                      });
                     }}
                   />
                   <TextField
@@ -326,9 +364,18 @@ const Rutinas = () => {
                     margin="dense"
                     value={ej.carga}
                     onChange={e => {
-                      const copy = { ...rutina };
-                      copy.dias[i].ejercicios[j].carga = e.target.value;
-                      setRutina(copy);
+                      const val = e.target.value;
+                      setRutina(prev => {
+                        const copy = { ...prev };
+                        copy.dias = [...prev.dias];
+                        copy.dias[i] = { ...copy.dias[i] };
+                        copy.dias[i].ejercicios = [...copy.dias[i].ejercicios];
+                        copy.dias[i].ejercicios[j] = {
+                          ...copy.dias[i].ejercicios[j],
+                          carga: val,
+                        };
+                        return copy;
+                      });
                     }}
                   />
                   <TextField
@@ -337,9 +384,18 @@ const Rutinas = () => {
                     margin="dense"
                     value={ej.observaciones}
                     onChange={e => {
-                      const copy = { ...rutina };
-                      copy.dias[i].ejercicios[j].observaciones = e.target.value;
-                      setRutina(copy);
+                      const val = e.target.value;
+                      setRutina(prev => {
+                        const copy = { ...prev };
+                        copy.dias = [...prev.dias];
+                        copy.dias[i] = { ...copy.dias[i] };
+                        copy.dias[i].ejercicios = [...copy.dias[i].ejercicios];
+                        copy.dias[i].ejercicios[j] = {
+                          ...copy.dias[i].ejercicios[j],
+                          observaciones: val,
+                        };
+                        return copy;
+                      });
                     }}
                   />
                 </Box>
