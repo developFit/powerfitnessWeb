@@ -32,7 +32,7 @@ interface Alumno {
 }
 
 interface EjercicioItem {
-  id: number;
+  id: number | string;
   nombre: string;
 }
 
@@ -293,7 +293,7 @@ const Rutinas = () => {
                   <FormControl fullWidth margin="dense">
                     <InputLabel>Ejercicio</InputLabel>
                     <Select
-                      value={ej.idEjercicio}
+                      value={ej.idEjercicio || ''}
                       onChange={e => {
                         const val = e.target.value;
                         setRutina(prev => {
@@ -314,7 +314,7 @@ const Rutinas = () => {
                         <em>Seleccione un ejercicio</em>
                       </MenuItem>
                       {ejercicios.map(ex => (
-                        <MenuItem key={ex.id} value={ex.id}>{ex.nombre}</MenuItem>
+                        <MenuItem key={ex.id} value={Number(ex.id)}>{ex.nombre}</MenuItem>
                       ))}
                     </Select>
                   </FormControl>
