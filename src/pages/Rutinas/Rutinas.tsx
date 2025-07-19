@@ -108,9 +108,8 @@ const Rutinas = () => {
 
   const handleAgregarEjercicio = (i: number) => {
     const copy = { ...rutina };
-    const firstEjercicio = ejercicios[0]?.id ?? 0;
     copy.dias[i].ejercicios.push({
-      idEjercicio: firstEjercicio,
+      idEjercicio: 0,
       grupoMuscular: gruposMusculares[0],
       series: 0,
       repeticiones: 0,
@@ -277,9 +276,17 @@ const Rutinas = () => {
                       value={ej.idEjercicio}
                       onChange={e => {
                         const val = e.target.value;
-                        const copy = { ...rutina };
-                        copy.dias[i].ejercicios[j].idEjercicio = val === '' ? 0 : Number(val);
-                        setRutina(copy);
+                        setRutina(prev => {
+                          const copy = { ...prev };
+                          copy.dias = [...prev.dias];
+                          copy.dias[i] = { ...copy.dias[i] };
+                          copy.dias[i].ejercicios = [...copy.dias[i].ejercicios];
+                          copy.dias[i].ejercicios[j] = {
+                            ...copy.dias[i].ejercicios[j],
+                            idEjercicio: val === '' ? 0 : Number(val)
+                          };
+                          return copy;
+                        });
                       }}
                       label="Ejercicio"
                     >
