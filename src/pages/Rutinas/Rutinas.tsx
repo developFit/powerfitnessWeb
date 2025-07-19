@@ -294,7 +294,7 @@ const Rutinas = () => {
                   <FormControl fullWidth margin="dense">
                     <InputLabel>Ejercicio</InputLabel>
                     <Select
-                      value={ej.idEjercicio || ''}
+                      value={ej.idEjercicio === 0 ? '' : ej.idEjercicio}
                       onChange={e => {
                         const val = e.target.value;
                         setRutina(prev => {
@@ -304,7 +304,7 @@ const Rutinas = () => {
                           copy.dias[i].ejercicios = [...copy.dias[i].ejercicios];
                           copy.dias[i].ejercicios[j] = {
                             ...copy.dias[i].ejercicios[j],
-                            idEjercicio: toNumberOrZero(val)
+                            idEjercicio: val === '' ? 0 : Number(val)
                           };
                           return copy;
                         });
