@@ -94,6 +94,9 @@ const Rutinas = () => {
   useEffect(() => {
     AlumnosService.getAll().then(r => setAlumnos(r.data));
     EjerciciosService.getAll().then(r => setEjercicios(r.data));
+    RutinasService.getAll()
+      .then(r => setItems(r.data))
+      .catch(() => {});
   }, []);
 
   const handleAgregarDia = () => {
@@ -130,8 +133,9 @@ const Rutinas = () => {
     };
 
     try {
-      await RutinasService.create(payload);
-      setItems([...items, payload]);
+      const response = await RutinasService.create(payload);
+      const nuevo = response.data || payload;
+      setItems([...items, nuevo]);
       showSuccess('Rutina guardada correctamente');
     } catch (error) {
       showError('Error al guardar rutina');
