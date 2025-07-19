@@ -297,12 +297,20 @@ const Rutinas = () => {
                       value={ej.idEjercicio === 0 ? '' : ej.idEjercicio}
                       onChange={e => {
                         const val = e.target.value;
+                        console.log('Ejercicio seleccionado:', val);
                         setRutina(prev => {
                           const copy = { ...prev };
                           copy.dias = [...prev.dias];
                           copy.dias[i] = { ...copy.dias[i] };
                           copy.dias[i].ejercicios = [...copy.dias[i].ejercicios];
                           const parsed = parseInt(val as string, 10);
+                          console.log('Parsed ID:', parsed);
+                          if (Number.isNaN(parsed)) {
+                            copy.dias[i].ejercicios[j] = {
+                              ...copy.dias[i].ejercicios[j],
+                              idEjercicio: 0,
+                            };
+                          }
                           copy.dias[i].ejercicios[j] = {
                             ...copy.dias[i].ejercicios[j],
                             idEjercicio: Number.isNaN(parsed) ? 0 : parsed
@@ -316,7 +324,7 @@ const Rutinas = () => {
                         <em>Seleccione un ejercicio</em>
                       </MenuItem>
                       {ejercicios.map(ex => (
-                        <MenuItem key={ex.id} value={Number(ex.id)}>{ex.nombre}</MenuItem>
+                        <MenuItem key={ex.idEjercicio} value={Number(ex.idEjercicio)}>{ex.nombre}</MenuItem>
                       ))}
                     </Select>
                   </FormControl>
