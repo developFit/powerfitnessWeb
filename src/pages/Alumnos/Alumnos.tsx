@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box, Button, Dialog, DialogActions, DialogContent, DialogTitle,
   TextField, Typography, Paper, Table, TableBody, TableCell,
@@ -9,12 +9,21 @@ import AlumnosService from "../../services/AlumnosService";
 import { showError, showSuccess } from "../../utils/alerts";
 
 interface Item {
-  id: number;
+  idAlumno: number;
+  tipoAlumno: string;
   nombre: string;
-  email: string;
-  username: string;
-  password: string;
+  objetivos: string;
+  nivelDeActividadFisica: string;
+  nombreCompleto: string;
   telefono: string;
+  genero: string;
+  edad: string;
+  altura: string;
+  peso: string;
+  datosAdicionales: string;
+  email?: string;
+  username?: string;
+  password?: string;
 }
 
 const Alumnos = () => {
@@ -22,38 +31,57 @@ const Alumnos = () => {
   const [openForm, setOpenForm] = useState(false);
   const [openDetalle, setOpenDetalle] = useState(false);
   const [nuevo, setNuevo] = useState<Item>({
-    id: 0,
+    idAlumno: 0,
+    tipoAlumno: "",
     nombre: "",
+    objetivos: "",
+    nivelDeActividadFisica: "",
+    nombreCompleto: "",
+    telefono: "",
+    genero: "",
+    edad: "",
+    altura: "",
+    peso: "",
+    datosAdicionales: "",
     email: "",
     username: "",
     password: "",
-    telefono: "",
   });
   const [selectedAlumno, setSelectedAlumno] = useState<Item | null>(null);
   const [tabIndex, setTabIndex] = useState(0);
 
+  useEffect(() => {
+    AlumnosService.getAll()
+      .then(r => setItems(r.data))
+      .catch(() => showError('Error al cargar alumnos'));
+  }, []);
+
   const handleOpenForm = () => {
     setNuevo({
-      id: 0,
+      idAlumno: 0,
+      tipoAlumno: "",
       nombre: "",
+      objetivos: "",
+      nivelDeActividadFisica: "",
+      nombreCompleto: "",
+      telefono: "",
+      genero: "",
+      edad: "",
+      altura: "",
+      peso: "",
+      datosAdicionales: "",
       email: "",
       username: "",
       password: "",
-      telefono: "",
     });
     setOpenForm(true);
   };
 
   const handleGuardar = async () => {
     try {
-      await AlumnosService.create({
-        nombre: nuevo.nombre,
-        email: nuevo.email,
-        username: nuevo.username,
-        password: nuevo.password,
-        telefono: nuevo.telefono,
-      });
-      setItems([...items, { ...nuevo, id: items.length + 1 }]);
+      const response = await AlumnosService.create(nuevo);
+      const guardado = response.data || nuevo;
+      setItems([...items, guardado]);
       showSuccess('Alumno guardado correctamente');
     } catch (error) {
       showError('Error al guardar alumno');
@@ -87,16 +115,16 @@ const Alumnos = () => {
             <TableRow>
               <TableCell sx={{ color: "#FFA726" }}>ID</TableCell>
               <TableCell sx={{ color: "#FFA726" }}>Nombre</TableCell>
-              <TableCell sx={{ color: "#FFA726" }}>Email</TableCell>
+              <TableCell sx={{ color: "#FFA726" }}>Teléfono</TableCell>
               <TableCell sx={{ color: "#FFA726" }}>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {items.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell sx={{ color: "#fff" }}>{item.id}</TableCell>
+              <TableRow key={item.idAlumno}>
+                <TableCell sx={{ color: "#fff" }}>{item.idAlumno}</TableCell>
                 <TableCell sx={{ color: "#fff" }}>{item.nombre}</TableCell>
-                <TableCell sx={{ color: "#fff" }}>{item.email}</TableCell>
+                <TableCell sx={{ color: "#fff" }}>{item.telefono}</TableCell>
                 <TableCell>
                   <Button variant="outlined" color="warning" onClick={() => handleVerDetalle(item)}>Detalle</Button>
                 </TableCell>
@@ -164,9 +192,11 @@ const Alumnos = () => {
           )}
           {tabIndex === 1 && (
             <Box sx={{ mt: 2 }}>
-              <Typography color="orange">Nombre: {selectedAlumno?.nombre}</Typography>
-              <Typography color="orange">Email: {selectedAlumno?.email}</Typography>
-              {/* Agregar más info real si está disponible */}
+              <Typography color="orange">Nombre: {selectedAlumno?.nombreCompleto}</Typography>
+              <Typography color="orange">Teléfono: {selectedAlumno?.telefono}</Typography>
+              <Typography color="orange">Edad: {selectedAlumno?.edad}</Typography>
+              <Typography color="orange">Altura: {selectedAlumno?.altura}</Typography>
+              <Typography color="orange">Peso: {selectedAlumno?.peso}</Typography>
             </Box>
           )}
           {tabIndex === 2 && (
