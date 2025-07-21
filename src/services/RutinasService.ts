@@ -1,6 +1,6 @@
 import axios from "./api";
 
-const API_URL = "/api/rutinas";
+const API_URL = "/api/rutina";
 
 class RutinasService {
   getAll() {

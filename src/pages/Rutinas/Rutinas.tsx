@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { Key, useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -27,6 +27,7 @@ import EjerciciosService from "../../services/EjerciciosService";
 import { showError, showSuccess } from "../../utils/alerts";
 
 interface Alumno {
+  idAlumno: Key | null | undefined;
   id: number;
   nombre: string;
 }
@@ -117,35 +118,35 @@ const Rutinas = () => {
   };
 
   const handleGuardar = async () => {
-    const payload: Rutina = {
-      ...rutina,
-      idAlumno: Number(rutina.idAlumno),
-      dias: rutina.dias.map(d => ({
-        ...d,
-        ejercicios: d.ejercicios.map(e => ({
-          ...e,
-          idEjercicio: Number(e.idEjercicio)
-        }))
+  const payload = {
+    nivelRutina: rutina.objetivo || "General", // Podés usar otro campo si querés
+    idAlumno: rutina.idAlumno,
+    imagenUrl: "", // o podés agregar una imagen más adelante
+    jornadasRequestDTO: rutina.dias.map(d => ({
+      ejerciciosDeJornadaRequestDTO: d.ejercicios.map(e => ({
+        idEjercicio: e.idEjercicio,
+        rondas: e.series,
+        repeticiones: e.repeticiones
       }))
-    };
-
-    try {
-      await RutinasService.create(payload);
-      setItems([...items, payload]);
-      showSuccess('Rutina guardada correctamente');
-    } catch (error) {
-      showError('Error al guardar rutina');
-    } finally {
-      setOpen(false);
-      setRutina({
-        idAlumno: 0,
-        nombre: '',
-        objetivo: '',
-        diasPorSemana: '1',
-        dias: [{ dia: 'Lunes', ejercicios: [] }],
-      });
-    }
+    }))
   };
+
+  try {
+    await RutinasService.create(payload);
+    showSuccess("Rutina guardada correctamente");
+    setOpen(false);
+    setRutina({
+      idAlumno: 0,
+      nombre: "",
+      objetivo: "",
+      diasPorSemana: "1",
+      dias: [{ dia: "Lunes", ejercicios: [] }],
+    });
+  } catch (error: any) {
+    console.error("Error al guardar rutina:", error);
+    showError("Error al guardar rutina");
+  }
+};
 
   return (
     <Box>
@@ -201,9 +202,11 @@ const Rutinas = () => {
               <MenuItem value="">
                 <em>Seleccione un alumno</em>
               </MenuItem>
-              {alumnos.map(a => (
-                <MenuItem key={a.id} value={a.id}>{a.nombre}</MenuItem>
-              ))}
+             {alumnos.map(a => (
+  <MenuItem key={a.idAlumno} value={a.idAlumno}>
+    {a.nombre}
+  </MenuItem>
+))}
             </Select>
           </FormControl>
           <TextField
