@@ -516,10 +516,12 @@ const Rutinas = () => {
               <Typography><strong>Nombre:</strong> {detalle.nombre}</Typography>
               <Typography><strong>Objetivo:</strong> {detalle.objetivo}</Typography>
               <Typography><strong>Días por semana:</strong> {detalle.diasPorSemana}</Typography>
+
               {detalle?.dias?.map((d, i) => (
                 <Box key={i} sx={{ mt: 2 }}>
                   <Typography variant="subtitle1">{d.dia}</Typography>
                   {d.ejercicios?.map((e, j) => (
+
                     <Box key={j} sx={{ pl: 2 }}>
                       <Typography>- Grupo: {e.grupoMuscular}</Typography>
                       <Typography>- Series: {e.series}</Typography>
