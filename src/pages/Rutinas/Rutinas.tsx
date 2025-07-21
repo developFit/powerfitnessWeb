@@ -18,9 +18,14 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  IconButton
 } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import RutinasService from "../../services/RutinasService";
 import AlumnosService from "../../services/AlumnosService";
 import EjerciciosService from "../../services/EjerciciosService";
@@ -79,18 +84,22 @@ const gruposMusculares = [
   "Abdominales",
 ];
 
+const emptyRutina: Rutina = {
+  idAlumno: 0,
+  nombre: '',
+  objetivo: '',
+  diasPorSemana: '1',
+  dias: [{ dia: 'Lunes', ejercicios: [] }]
+};
+
 const Rutinas = () => {
   const [items, setItems] = useState<Rutina[]>([]);
   const [open, setOpen] = useState(false);
+  const [detalle, setDetalle] = useState<Rutina | null>(null);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [alumnos, setAlumnos] = useState<Alumno[]>([]);
   const [ejercicios, setEjercicios] = useState<EjercicioItem[]>([]);
-  const [rutina, setRutina] = useState<Rutina>({
-    idAlumno: 0,
-    nombre: '',
-    objetivo: '',
-    diasPorSemana: '1',
-    dias: [{ dia: 'Lunes', ejercicios: [] }],
-  });
+  const [rutina, setRutina] = useState<Rutina>(emptyRutina);
 
   useEffect(() => {
     AlumnosService.getAll().then(r => setAlumnos(r.data));
@@ -127,6 +136,49 @@ const Rutinas = () => {
     });
   };
 
+  const handleEditar = (index: number) => {
+    setEditingIndex(index);
+    setRutina(items[index]);
+    setOpen(true);
+  };
+
+  const handleEliminar = async (index: number) => {
+    try {
+      const current = items[index] as any;
+      if (current && current.id) {
+        await RutinasService.delete(current.id);
+      }
+      setItems(items.filter((_, i) => i !== index));
+      showSuccess('Rutina eliminada');
+    } catch {
+      showError('Error al eliminar rutina');
+    }
+  };
+
+  const handleVerDetalle = (item: Rutina) => {
+    setDetalle(item);
+  };
+
+  const handleExport = () => {
+    const header = ['Alumno', 'Nombre', 'Objetivo', 'DiasPorSemana'];
+    const rows = items.map(r => [
+      alumnos.find(a => a.idAlumno === r.idAlumno)?.nombre || r.idAlumno,
+      r.nombre,
+      r.objetivo,
+      r.diasPorSemana
+    ]);
+    let csv = header.join(',') + '\n';
+    csv += rows.map(row => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'rutinas.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleGuardar = async () => {
     const payload: Rutina = {
       ...rutina,
@@ -135,55 +187,74 @@ const Rutinas = () => {
         ...d,
         ejercicios: d.ejercicios.map(e => ({
           ...e,
-          // Convert any string value to number and default to 0 if invalid
           idEjercicio: toNumberOrZero(e.idEjercicio)
         }))
       }))
     };
 
     try {
-      const response = await RutinasService.create(payload);
-      const nuevo = response.data || payload;
-      setItems([...items, nuevo]);
-      showSuccess('Rutina guardada correctamente');
+      if (editingIndex !== null) {
+        const current = items[editingIndex] as any;
+        if (current && current.id) {
+          await RutinasService.update(current.id, payload);
+        }
+        const updated = current && current.id ? { ...payload, id: current.id } : payload;
+        setItems(items.map((it, idx) => idx === editingIndex ? updated : it));
+        showSuccess('Rutina actualizada');
+      } else {
+        const response = await RutinasService.create(payload);
+        const nuevo = response.data || payload;
+        setItems([...items, nuevo]);
+        showSuccess('Rutina guardada correctamente');
+      }
     } catch (error) {
       showError('Error al guardar rutina');
     } finally {
       setOpen(false);
-      setRutina({
-        idAlumno: 0,
-        nombre: '',
-        objetivo: '',
-        diasPorSemana: '1',
-        dias: [{ dia: 'Lunes', ejercicios: [] }],
-      });
+      setEditingIndex(null);
+      setRutina(emptyRutina);
     }
   };
 
   return (
     <Box>
       <Typography variant="h5">Rutinas</Typography>
-      <Button variant="contained" onClick={() => setOpen(true)}>
-        Crear Rutina
-      </Button>
+      <Box display="flex" gap={1}>
+        <Button variant="contained" onClick={() => setOpen(true)}>
+          Crear Rutina
+        </Button>
+        <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExport}>
+          Exportar
+        </Button>
+      </Box>
 
       <TableContainer component={Paper} sx={{ mt: 2 }}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Alumno</TableCell>
               <TableCell>Nombre</TableCell>
               <TableCell>Objetivo</TableCell>
               <TableCell>Días/Semana</TableCell>
+              <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {items.map((r, idx) => (
               <TableRow key={idx}>
-                <TableCell>{alumnos.find(a => a.idAlumno === r.idAlumno)?.nombre || r.idAlumno}</TableCell>
                 <TableCell>{r.nombre}</TableCell>
                 <TableCell>{r.objetivo}</TableCell>
                 <TableCell>{r.diasPorSemana}</TableCell>
+                <TableCell>
+                  <IconButton color="info" onClick={() => handleVerDetalle(r)}>
+                    <VisibilityIcon />
+                  </IconButton>
+                  <IconButton color="primary" onClick={() => handleEditar(idx)}>
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton color="error" onClick={() => handleEliminar(idx)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -195,11 +266,13 @@ const Rutinas = () => {
         onClose={(e, r) => {
           if (r === 'backdropClick' || r === 'escapeKeyDown') return;
           setOpen(false);
+          setEditingIndex(null);
+          setRutina(emptyRutina);
         }}
         maxWidth="lg"
         fullWidth
       >
-        <DialogTitle>Nueva Rutina</DialogTitle>
+        <DialogTitle>{editingIndex !== null ? 'Editar Rutina' : 'Nueva Rutina'}</DialogTitle>
         <DialogContent>
           <FormControl fullWidth margin="dense">
             <InputLabel>Alumno</InputLabel>
@@ -422,6 +495,48 @@ const Rutinas = () => {
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancelar</Button>
           <Button variant="contained" onClick={handleGuardar}>Guardar</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={!!detalle}
+        onClose={(e, r) => {
+          if (r === 'backdropClick' || r === 'escapeKeyDown') return;
+          setDetalle(null);
+        }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Detalle de {alumnos.find(a => a.idAlumno === detalle?.idAlumno)?.nombre}
+        </DialogTitle>
+        <DialogContent dividers>
+          {detalle && (
+            <Box>
+              <Typography><strong>Nombre:</strong> {detalle.nombre}</Typography>
+              <Typography><strong>Objetivo:</strong> {detalle.objetivo}</Typography>
+              <Typography><strong>Días por semana:</strong> {detalle.diasPorSemana}</Typography>
+              {detalle.dias.map((d, i) => (
+                <Box key={i} sx={{ mt: 2 }}>
+                  <Typography variant="subtitle1">{d.dia}</Typography>
+                  {d.ejercicios.map((e, j) => (
+                    <Box key={j} sx={{ pl: 2 }}>
+                      <Typography>- Grupo: {e.grupoMuscular}</Typography>
+                      <Typography>- Series: {e.series}</Typography>
+                      <Typography>- Repeticiones: {e.repeticiones}</Typography>
+                      <Typography>- Carga: {e.carga}</Typography>
+                      {e.observaciones && (
+                        <Typography>- Obs: {e.observaciones}</Typography>
+                      )}
+                    </Box>
+                  ))}
+                </Box>
+              ))}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDetalle(null)}>Cerrar</Button>
         </DialogActions>
       </Dialog>
     </Box>
