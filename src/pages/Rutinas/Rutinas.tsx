@@ -138,7 +138,12 @@ const Rutinas = () => {
 
   const handleEditar = (index: number) => {
     setEditingIndex(index);
-    setRutina(items[index]);
+    const current = items[index];
+    setRutina({
+      ...emptyRutina,
+      ...current,
+      dias: Array.isArray((current as any).dias) ? (current as any).dias : emptyRutina.dias
+    });
     setOpen(true);
   };
 
@@ -183,9 +188,9 @@ const Rutinas = () => {
     const payload: Rutina = {
       ...rutina,
       idAlumno: Number(rutina.idAlumno),
-      dias: rutina.dias.map(d => ({
+      dias: (rutina.dias || []).map(d => ({
         ...d,
-        ejercicios: d.ejercicios.map(e => ({
+        ejercicios: (d.ejercicios || []).map(e => ({
           ...e,
           idEjercicio: toNumberOrZero(e.idEjercicio)
         }))
@@ -314,7 +319,7 @@ const Rutinas = () => {
             onChange={e => setRutina({ ...rutina, diasPorSemana: e.target.value })}
           />
 
-          {rutina.dias.map((d, i) => (
+          {rutina.dias?.map((d, i) => (
             <Box key={i} sx={{ border: '1px solid #ccc', mt: 2, p: 2 }}>
               <FormControl fullWidth margin="dense">
                 <InputLabel>Día</InputLabel>
