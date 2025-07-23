@@ -52,65 +52,16 @@ const ConfiguracionAlumno = () => {
   const [progresoAlumno, setProgresoAlumno] = useState<AlumnoConfiguracion | null>(null);
   
   useEffect(() => {
-    const lista = [
-      "enriquemoncerrat@gmail.com",
-      "maria@correo.com"
-    ];
     const cargar = async () => {
       setLoading(true);
-
-       // Simulación de datos
-  const mockResultados: AlumnoConfiguracion[] = [
-    {
-      idAlumno: 1,
-      nombreCompleto: "Enrique Moncerrat",
-      telefono: "1122334455",
-      genero: "Masculino",
-      edad: "28",
-      altura: "175",
-      peso: "72",
-      nivelDeActividadFisica: "Moderada",
-      objetivos: ["Ganar masa muscular", "Definición"],
-      datosAdicionales: "Prefiere entrenar por la mañana",
-      email: "enriquemoncerrat@gmail.com",
-      validado: false,
-      rutina: "",
-      plan: "",
-      platos: [],
-    },
-    {
-      idAlumno: 2,
-      nombreCompleto: "María González",
-      telefono: "1198765432",
-      genero: "Femenino",
-      edad: "32",
-      altura: "160",
-      peso: "60",
-      nivelDeActividadFisica: "Alta",
-      objetivos: ["Resistencia", "Bajar de peso"],
-      datosAdicionales: "Dieta vegana",
-      email: "maria@correo.com",
-      validado: false,
-      rutina: "",
-      plan: "",
-      platos: [],
-    },
-  ];
-
-  // Simular delay de red
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-      const resultados: AlumnoConfiguracion[] = [];
-      for (let email of lista) {
-        try {
-          const res = await api.get(`/api/configuracionAlumno/${encodeURIComponent(email)}`);
-          resultados.push({ ...res.data, email, validado: false });
-        } catch (err) {
-          console.error(err);
-        }
+      try {
+        const res = await api.get<AlumnoConfiguracion[]>("/api/getconfiguracionAlumnos");
+        setAlumnos(res.data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-    // setAlumnos(resultados);
-    setAlumnos(mockResultados);
-      setLoading(false);
     };
     cargar();
   }, []);
