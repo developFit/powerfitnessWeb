@@ -22,6 +22,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import EditIcon from "@mui/icons-material/Edit";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import api from "../../services/api";
+import { showError, showSuccess } from "../../utils/alerts";
 
 interface AlumnoConfiguracion {
   idAlumno: number;
@@ -86,22 +87,32 @@ const ConfiguracionAlumno = () => {
     setProgresoAlumno(alumno);
   };
 
-  const handleAsignar = () => {
+  const handleAsignar = async () => {
     if (!selectedAlumno) return;
-    console.log("Asignando rutina:", rutina);
-    console.log("Asignando plan:", plan);
-    console.log("Asignando platos:", platos);
-    setAlumnos((prev) =>
-      prev.map((a) =>
-        a.idAlumno === selectedAlumno.idAlumno
-          ? { ...a, validado: true, rutina, plan, platos }
-          : a
-      )
-    );
-    setRutina("");
-    setPlan("");
-    setPlatos([]);
-    setSelectedAlumno(null);
+    try {
+      await api.put(
+        `/api/alumno/${selectedAlumno.idAlumno}/rutina/${rutina}`,
+        null,
+        { params: { idPlanNutricional: plan } }
+      );
+
+      setAlumnos(prev =>
+        prev.map(a =>
+          a.idAlumno === selectedAlumno.idAlumno
+            ? { ...a, validado: true, rutina, plan, platos }
+            : a
+        )
+      );
+      showSuccess('Asignación realizada');
+    } catch (err) {
+      console.error(err);
+      showError('Error al asignar');
+    } finally {
+      setRutina('');
+      setPlan('');
+      setPlatos([]);
+      setSelectedAlumno(null);
+    }
   };
 
   return (
