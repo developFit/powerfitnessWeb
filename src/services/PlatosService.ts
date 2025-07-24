@@ -1,10 +1,10 @@
 import axios from "./api";
 
-const API_URL = "/api/platos";
+const API_URL = "/api/platoSugerido";
 
 class PlatosService {
   getAll() {
-    return axios.get(API_URL);
+    return axios.get(API_URL); // si tu backend soporta GET
   }
 
   getById(id: number) {
