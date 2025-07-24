@@ -43,7 +43,7 @@ interface EjercicioItem {
 }
 
 interface EjercicioRutina {
-  idEjercicio: number;
+  idEjercicio: number | string;
   grupoMuscular: string;
   series: number;
   repeticiones: number;
@@ -381,17 +381,11 @@ const Rutinas = () => {
                           copy.dias = [...prev.dias];
                           copy.dias[i] = { ...copy.dias[i] };
                           copy.dias[i].ejercicios = [...copy.dias[i].ejercicios];
-                          const parsed = parseInt(val as string, 10);
+                          const parsed = Number(val);
                           console.log('Parsed ID:', parsed);
-                          if (Number.isNaN(parsed)) {
-                            copy.dias[i].ejercicios[j] = {
-                              ...copy.dias[i].ejercicios[j],
-                              idEjercicio: 0,
-                            };
-                          }
                           copy.dias[i].ejercicios[j] = {
                             ...copy.dias[i].ejercicios[j],
-                            idEjercicio: Number.isNaN(parsed) ? 0 : parsed
+                            idEjercicio: Number.isNaN(parsed) ? val : parsed
                           };
                           return copy;
                         });
