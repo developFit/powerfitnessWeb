@@ -48,8 +48,8 @@ const ConfiguracionAlumno = () => {
   const [alumnos, setAlumnos] = useState<AlumnoConfiguracion[]>([]);
   const [selectedAlumno, setSelectedAlumno] = useState<AlumnoConfiguracion | null>(null);
   const [loading, setLoading] = useState(false);
-  const [rutina, setRutina] = useState<number | "">("");
-  const [plan, setPlan] = useState<number | "">("");
+  const [rutina, setRutina] = useState<string>("");
+  const [plan, setPlan] = useState<string>("");
   const [platos, setPlatos] = useState<string[]>([]);
   const [isEdit, setIsEdit] = useState(false);
   const [progresoAlumno, setProgresoAlumno] = useState<AlumnoConfiguracion | null>(null);
@@ -78,20 +78,20 @@ const ConfiguracionAlumno = () => {
   const handleValidar = (alumno: AlumnoConfiguracion) => {
     setSelectedAlumno(alumno);
     setIsEdit(false);
-    const rId = rutinasDisponibles.find(r => r.nombre === alumno.rutina)?.id ?? "";
-    const pId = planesDisponibles.find(p => p.nombre === alumno.plan)?.id ?? "";
-    setRutina(rId);
-    setPlan(pId);
+    const rId = rutinasDisponibles.find(r => r.nombre === alumno.rutina)?.id;
+    const pId = planesDisponibles.find(p => p.nombre === alumno.plan)?.id;
+    setRutina(rId ? String(rId) : "");
+    setPlan(pId ? String(pId) : "");
     setPlatos(alumno.platos || []);
   };
 
   const handleEditar = (alumno: AlumnoConfiguracion) => {
     setSelectedAlumno(alumno);
     setIsEdit(true);
-    const rId = rutinasDisponibles.find(r => r.nombre === alumno.rutina)?.id ?? "";
-    const pId = planesDisponibles.find(p => p.nombre === alumno.plan)?.id ?? "";
-    setRutina(rId);
-    setPlan(pId);
+    const rId = rutinasDisponibles.find(r => r.nombre === alumno.rutina)?.id;
+    const pId = planesDisponibles.find(p => p.nombre === alumno.plan)?.id;
+    setRutina(rId ? String(rId) : "");
+    setPlan(pId ? String(pId) : "");
     setPlatos(alumno.platos || []);
   };
 
@@ -102,14 +102,16 @@ const ConfiguracionAlumno = () => {
   const handleAsignar = async () => {
     if (!selectedAlumno) return;
     try {
+      const rutinaId = Number(rutina);
+      const planId = Number(plan);
       await api.put(
-        `/api/alumno/${selectedAlumno.idAlumno}/rutina/${rutina}`,
+        `/api/alumno/${selectedAlumno.idAlumno}/rutina/${rutinaId}`,
         null,
-        { params: { idPlanNutricional: plan } }
+        { params: { idPlanNutricional: planId } }
       );
 
-      const rutinaNombre = rutinasDisponibles.find(r => r.id === rutina)?.nombre;
-      const planNombre = planesDisponibles.find(p => p.id === plan)?.nombre;
+      const rutinaNombre = rutinasDisponibles.find(r => r.id === rutinaId)?.nombre;
+      const planNombre = planesDisponibles.find(p => p.id === planId)?.nombre;
       setAlumnos(prev =>
         prev.map(a =>
           a.idAlumno === selectedAlumno.idAlumno
@@ -201,7 +203,7 @@ const ConfiguracionAlumno = () => {
             fullWidth
             margin="dense"
             value={rutina}
-            onChange={(e) => setRutina(e.target.value === '' ? '' : Number(e.target.value))}
+            onChange={(e) => setRutina(e.target.value)}
           >
             <MenuItem value="">
               <em>Seleccione una rutina</em>
@@ -217,7 +219,7 @@ const ConfiguracionAlumno = () => {
             fullWidth
             margin="dense"
             value={plan}
-            onChange={(e) => setPlan(e.target.value === '' ? '' : Number(e.target.value))}
+            onChange={(e) => setPlan(e.target.value)}
           >
             <MenuItem value="">
               <em>Seleccione un plan</em>
