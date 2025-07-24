@@ -22,6 +22,8 @@ import CheckIcon from "@mui/icons-material/Check";
 import EditIcon from "@mui/icons-material/Edit";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import api from "../../services/api";
+import RutinasService from "../../services/RutinasService";
+import PlanesNutricionalesService from "../../services/PlanesNutricionalesService";
 import { showError, showSuccess } from "../../utils/alerts";
 
 interface AlumnoConfiguracion {
@@ -46,11 +48,13 @@ const ConfiguracionAlumno = () => {
   const [alumnos, setAlumnos] = useState<AlumnoConfiguracion[]>([]);
   const [selectedAlumno, setSelectedAlumno] = useState<AlumnoConfiguracion | null>(null);
   const [loading, setLoading] = useState(false);
-  const [rutina, setRutina] = useState("");
-  const [plan, setPlan] = useState("");
+  const [rutina, setRutina] = useState<number | "">("");
+  const [plan, setPlan] = useState<number | "">("");
   const [platos, setPlatos] = useState<string[]>([]);
   const [isEdit, setIsEdit] = useState(false);
   const [progresoAlumno, setProgresoAlumno] = useState<AlumnoConfiguracion | null>(null);
+  const [rutinasDisponibles, setRutinasDisponibles] = useState<{ id: number; nombre: string }[]>([]);
+  const [planesDisponibles, setPlanesDisponibles] = useState<{ id: number; nombre: string }[]>([]);
   
   useEffect(() => {
     const cargar = async () => {
@@ -58,6 +62,10 @@ const ConfiguracionAlumno = () => {
       try {
         const res = await api.get<AlumnoConfiguracion[]>("/api/getconfiguracionAlumnos");
         setAlumnos(res.data);
+        const rutRes = await RutinasService.getAll();
+        setRutinasDisponibles(rutRes.data);
+        const planRes = await PlanesNutricionalesService.getAll();
+        setPlanesDisponibles(planRes.data);
       } catch (err) {
         console.error(err);
       } finally {
@@ -70,16 +78,20 @@ const ConfiguracionAlumno = () => {
   const handleValidar = (alumno: AlumnoConfiguracion) => {
     setSelectedAlumno(alumno);
     setIsEdit(false);
-    setRutina(alumno.rutina || "");
-    setPlan(alumno.plan || "");
+    const rId = rutinasDisponibles.find(r => r.nombre === alumno.rutina)?.id ?? "";
+    const pId = planesDisponibles.find(p => p.nombre === alumno.plan)?.id ?? "";
+    setRutina(rId);
+    setPlan(pId);
     setPlatos(alumno.platos || []);
   };
 
   const handleEditar = (alumno: AlumnoConfiguracion) => {
     setSelectedAlumno(alumno);
     setIsEdit(true);
-    setRutina(alumno.rutina || "");
-    setPlan(alumno.plan || "");
+    const rId = rutinasDisponibles.find(r => r.nombre === alumno.rutina)?.id ?? "";
+    const pId = planesDisponibles.find(p => p.nombre === alumno.plan)?.id ?? "";
+    setRutina(rId);
+    setPlan(pId);
     setPlatos(alumno.platos || []);
   };
 
@@ -96,10 +108,12 @@ const ConfiguracionAlumno = () => {
         { params: { idPlanNutricional: plan } }
       );
 
+      const rutinaNombre = rutinasDisponibles.find(r => r.id === rutina)?.nombre;
+      const planNombre = planesDisponibles.find(p => p.id === plan)?.nombre;
       setAlumnos(prev =>
         prev.map(a =>
           a.idAlumno === selectedAlumno.idAlumno
-            ? { ...a, validado: true, rutina, plan, platos }
+            ? { ...a, validado: true, rutina: rutinaNombre, plan: planNombre, platos }
             : a
         )
       );
@@ -187,10 +201,14 @@ const ConfiguracionAlumno = () => {
             fullWidth
             margin="dense"
             value={rutina}
-            onChange={(e) => setRutina(e.target.value)}
+            onChange={(e) => setRutina(e.target.value === '' ? '' : Number(e.target.value))}
           >
-            <MenuItem value="rutina1">Rutina 1</MenuItem>
-            <MenuItem value="rutina2">Rutina 2</MenuItem>
+            <MenuItem value="">
+              <em>Seleccione una rutina</em>
+            </MenuItem>
+            {rutinasDisponibles.map(r => (
+              <MenuItem key={r.id} value={r.id}>{r.nombre}</MenuItem>
+            ))}
           </TextField>
 
           <TextField
@@ -199,10 +217,14 @@ const ConfiguracionAlumno = () => {
             fullWidth
             margin="dense"
             value={plan}
-            onChange={(e) => setPlan(e.target.value)}
+            onChange={(e) => setPlan(e.target.value === '' ? '' : Number(e.target.value))}
           >
-            <MenuItem value="plan1">Plan 1</MenuItem>
-            <MenuItem value="plan2">Plan 2</MenuItem>
+            <MenuItem value="">
+              <em>Seleccione un plan</em>
+            </MenuItem>
+            {planesDisponibles.map(p => (
+              <MenuItem key={p.id} value={p.id}>{p.nombre}</MenuItem>
+            ))}
           </TextField>
 
           <TextField
