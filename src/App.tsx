@@ -6,6 +6,7 @@ import Rutinas from "./pages/Rutinas/Rutinas";
 import Platos from "./pages/Platos/Platos";
 import Ejercicios from "./pages/Ejercicios/Ejercicios";
 import PlanesNutricionales from "./pages/PlanesNutricionales/PlanesNutricionales";
+import PlanesMembresia from "./pages/PlanesMembresia/PlanesMembresia";
 import Asistencias from "./pages/Asistencias/Asistencias";
 import AvancesNutricionales from "./pages/AvancesNutricionales/AvancesNutricionales";
 import CuentasCorrientes from "./pages/CuentasCorrientes/CuentasCorrientes";
@@ -28,6 +29,7 @@ function App() {
         <Route path="/rutinas" element={<Rutinas />} />
         <Route path="/platos" element={<Platos />} />
         <Route path="/ejercicios" element={<Ejercicios />} />
+        <Route path="/planes-membresia" element={<PlanesMembresia />} />
         <Route path="/planes" element={<PlanesNutricionales />} />
         <Route path="/asistencias" element={<Asistencias />} />
         <Route path="/avances" element={<AvancesNutricionales />} />
