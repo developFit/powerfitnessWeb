@@ -24,20 +24,25 @@ import AddIcon from "@mui/icons-material/Add";
 import PlanesMembresiaService from "../../services/PlanesMembresiaService";
 import { showError, showSuccess } from "../../utils/alerts";
 
+enum EstadoPlan {
+  ACTIVO = "ACTIVO",
+  INACTIVO = "INACTIVO"
+}
+
 interface Plan {
-  id: number;
+  idPlan: number;
   nombre: string;
   precio: number;
   descripcion: string;
-  estado: "activo" | "inactivo";
+  estado: EstadoPlan.ACTIVO | EstadoPlan.INACTIVO;
 }
 
 const emptyPlan: Plan = {
-  id: 0,
+  idPlan: 0,
   nombre: "",
   precio: 0,
   descripcion: "",
-  estado: "activo",
+  estado: EstadoPlan.ACTIVO,
 };
 
 const PlanesMembresia = () => {
@@ -53,15 +58,14 @@ const PlanesMembresia = () => {
 
   const handleGuardar = async () => {
     try {
-      if (actual.id) {
-        await PlanesMembresiaService.update(actual.id, actual);
-        setPlanes(planes.map((p) => (p.id === actual.id ? actual : p)));
+      if (actual.idPlan) {
+        await PlanesMembresiaService.update(actual.idPlan, actual);
+        setPlanes(planes.map((p) => (p.idPlan === actual.idPlan ? actual : p)));
         showSuccess("Plan actualizado");
       } else {
         const response = await PlanesMembresiaService.create(actual);
-        const nuevo = response.data || { ...actual, id: planes.length + 1 };
-        setPlanes([...planes, nuevo]);
-        showSuccess("Plan guardado");
+        showSuccess(response.data);
+        location.href = location.href
       }
     } catch (e) {
       showError("Error al guardar plan");
@@ -77,11 +81,17 @@ const PlanesMembresia = () => {
   };
 
   const handleToggleEstado = async (plan: Plan) => {
-    const nuevoEstado = plan.estado === "activo" ? "inactivo" : "activo";
+    let nuevoEstado = plan.estado;
+    if(plan.estado == EstadoPlan.ACTIVO){
+      nuevoEstado = EstadoPlan.INACTIVO;
+    }
+    else{
+      nuevoEstado = EstadoPlan.ACTIVO;
+    }
     try {
-      await PlanesMembresiaService.update(plan.id, { ...plan, estado: nuevoEstado });
+      await PlanesMembresiaService.update(plan.idPlan, { ...plan, estado: nuevoEstado });
       setPlanes(
-        planes.map((p) => (p.id === plan.id ? { ...p, estado: nuevoEstado } : p))
+        planes.map((p) => (p.idPlan === plan.idPlan ? { ...p, estado: nuevoEstado } : p))
       );
       showSuccess("Estado actualizado");
     } catch {
@@ -107,7 +117,6 @@ const PlanesMembresia = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>ID</TableCell>
               <TableCell>Nombre</TableCell>
               <TableCell>Precio</TableCell>
               <TableCell>Descripción</TableCell>
@@ -117,8 +126,7 @@ const PlanesMembresia = () => {
           </TableHead>
           <TableBody>
             {planes.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell>{p.id}</TableCell>
+              <TableRow key={p.idPlan}>
                 <TableCell>{p.nombre}</TableCell>
                 <TableCell>{p.precio}</TableCell>
                 <TableCell>{p.descripcion}</TableCell>
@@ -128,10 +136,10 @@ const PlanesMembresia = () => {
                     <EditIcon />
                   </IconButton>
                   <IconButton
-                    color={p.estado === "activo" ? "warning" : "success"}
+                    color={p.estado === EstadoPlan.INACTIVO ? "warning" : "success"}
                     onClick={() => handleToggleEstado(p)}
                   >
-                    {p.estado === "activo" ? <ToggleOffIcon /> : <ToggleOnIcon />}
+                    {p.estado === EstadoPlan.INACTIVO ? <ToggleOffIcon /> : <ToggleOnIcon />}
                   </IconButton>
                 </TableCell>
               </TableRow>
@@ -148,7 +156,7 @@ const PlanesMembresia = () => {
           setActual(emptyPlan);
         }}
       >
-        <DialogTitle>{actual.id ? "Editar Plan" : "Nuevo Plan"}</DialogTitle>
+        <DialogTitle>{actual.idPlan ? "Editar Plan" : "Nuevo Plan"}</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
@@ -162,7 +170,6 @@ const PlanesMembresia = () => {
             type="number"
             margin="dense"
             label="Precio"
-            value={actual.precio}
             onChange={(e) => setActual({ ...actual, precio: Number(e.target.value) })}
           />
           <TextField

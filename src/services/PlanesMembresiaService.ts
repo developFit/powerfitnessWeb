@@ -1,10 +1,10 @@
 import axios from "./api";
 
-const API_URL = "/api/planes-membresia";
+const API_URL = "/api/plan";
 
 class PlanesMembresiaService {
   getAll() {
-    return axios.get(API_URL);
+    return axios.get("/api/planes");
   }
 
   getById(id: number) {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { Key, useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -38,6 +38,7 @@ interface Alumno {
 }
 
 interface EjercicioItem {
+  idEjercicio: Key | null | undefined;
   id: number | string;
   nombre: string;
 }
