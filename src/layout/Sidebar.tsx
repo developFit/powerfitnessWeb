@@ -21,6 +21,7 @@ import TimelineIcon from "@mui/icons-material/Timeline";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import RestaurantMenuIcon from "@mui/icons-material/RestaurantMenu";
+import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Link } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
@@ -67,6 +68,10 @@ const SidebarResponsive = () => {
         <ListItem button component={Link} to="/platos">
           <ListItemIcon><FastfoodIcon sx={{ color: "#FFA726" }} /></ListItemIcon>
           <ListItemText primary="Platos" primaryTypographyProps={{ sx: { color: "#ffff" } }} />
+        </ListItem>
+        <ListItem button component={Link} to="/planes-membresia">
+          <ListItemIcon><MonetizationOnIcon sx={{ color: "#FFA726" }} /></ListItemIcon>
+          <ListItemText primary="Planes de Membresía" primaryTypographyProps={{ sx: { color: "#ffff" } }} />
         </ListItem>
         <ListItem button component={Link} to="/planes">
           <ListItemIcon><RestaurantMenuIcon sx={{ color: "#FFA726" }} /></ListItemIcon>
