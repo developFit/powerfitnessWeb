@@ -109,7 +109,7 @@ const Alumnos = () => {
       <Button variant="contained" color="warning" onClick={handleOpenForm}>
         Nuevo Alumno
       </Button>
-      <TableContainer compozxczcnent={Paper} sx={{ mt: 2, backgroundColor: "#1e1e1e" }}>
+      <TableContainer component={Paper} sx={{ mt: 2, backgroundColor: "#1e1e1e" }}>
         <Table>
           <TableHead>
             <TableRow>
