@@ -17,6 +17,9 @@ import {
   TableHead,
   TableRow,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
 } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import EditIcon from "@mui/icons-material/Edit";
@@ -25,6 +28,28 @@ import api from "../../services/api";
 import RutinasService from "../../services/RutinasService";
 import PlanesNutricionalesService from "../../services/PlanesNutricionalesService";
 import { showError, showSuccess } from "../../utils/alerts";
+
+interface Rutina {
+  idRutina: number;
+  nivelRutina: string;
+  nombre: string;
+  objetivo: string;
+  diasPorSemana: number;
+  tiempo: string;
+  imagenUrl: string;
+  // ... otros campos que necesites
+}
+
+interface Plan {
+  idPlanNutrcional: number; // Nota: tiene typo en la API (Nutrcional)
+  desayuno: string;
+  almuerzo: string;
+  cena: string;
+  colaciones: string[];
+  nombreRutina: string;
+  tips: string;
+  // ... otros campos
+}
 
 interface AlumnoConfiguracion {
   idAlumno: number;
@@ -39,9 +64,25 @@ interface AlumnoConfiguracion {
   datosAdicionales: string;
   email: string;
   validado: boolean;
-  rutina?: string;
-  plan?: string;
+  rutina?: Rutina; // 🔧 Ahora es un objeto, no string
+  rutinaActiva: boolean;
+  plan?: Plan;     // 🔧 Ahora es un objeto, no string
+  planActivo: boolean;
   platos?: string[];
+}
+
+// 1. Corregir la interface para reflejar la estructura real
+interface RutinaDisponible {
+  idRutina: number; // 🔧 Cambiar de 'id' a 'idRutina'
+  nombre: string;
+  objetivo: string;
+  diasPorSemana: number;
+}
+
+interface PlanDisponible {
+  idPlan?: number;           // Para rutinas disponibles
+  idPlanNutrcional?: number; // Para el plan asignado (con typo de la API)
+  nombre: string;
 }
 
 const ConfiguracionAlumno = () => {
@@ -53,21 +94,29 @@ const ConfiguracionAlumno = () => {
   const [platos, setPlatos] = useState<string[]>([]);
   const [isEdit, setIsEdit] = useState(false);
   const [progresoAlumno, setProgresoAlumno] = useState<AlumnoConfiguracion | null>(null);
-  const [rutinasDisponibles, setRutinasDisponibles] = useState<{ id: number; nombre: string }[]>([]);
-  const [planesDisponibles, setPlanesDisponibles] = useState<{ id: number; nombre: string }[]>([]);
+  const [rutinasDisponibles, setRutinasDisponibles] = useState<RutinaDisponible[]>([]);
+  const [planesDisponibles, setPlanesDisponibles] = useState<PlanDisponible[]>([]);
   
   useEffect(() => {
     const cargar = async () => {
       setLoading(true);
       try {
         const res = await api.get<AlumnoConfiguracion[]>("/api/getconfiguracionAlumnos");
+        console.log('Alumnos cargados:', res.data);
         setAlumnos(res.data);
+        
         const rutRes = await RutinasService.getAll();
-        setRutinasDisponibles(rutRes.data);
+        console.log('Rutinas response completo:', rutRes);
+        console.log('Rutinas data estructura:', rutRes.data);
+        console.log('Primera rutina:', rutRes.data[0]);
+        setRutinasDisponibles(rutRes.data || []);
+        
         const planRes = await PlanesNutricionalesService.getAll();
-        setPlanesDisponibles(planRes.data);
+        console.log('Planes response completo:', planRes);
+        console.log('Planes data estructura:', planRes.data);
+        setPlanesDisponibles(planRes.data || []);
       } catch (err) {
-        console.error(err);
+        console.error('Error al cargar datos:', err);
       } finally {
         setLoading(false);
       }
@@ -78,20 +127,45 @@ const ConfiguracionAlumno = () => {
   const handleValidar = (alumno: AlumnoConfiguracion) => {
     setSelectedAlumno(alumno);
     setIsEdit(false);
-    const rId = rutinasDisponibles.find(r => r.nombre === alumno.rutina)?.id;
-    const pId = planesDisponibles.find(p => p.nombre === alumno.plan)?.id;
-    setRutina(rId ? String(rId) : "");
-    setPlan(pId ? String(pId) : "");
+    
+    console.log('handleValidar - alumno:', alumno);
+    console.log('handleValidar - rutinasDisponibles:', rutinasDisponibles);
+    
+    // 🔧 Ahora rutina es un objeto, no un string
+    const rutinaAsignada = alumno.rutina;
+    const planAsignado = alumno.plan;
+    
+    console.log('handleValidar - rutinaAsignada:', rutinaAsignada);
+    console.log('handleValidar - planAsignado:', planAsignado);
+    
+    // Precargar los valores en los selects
+    const rutinaValue = rutinaAsignada?.idRutina ? String(rutinaAsignada.idRutina) : "";
+    const planValue = planAsignado?.idPlanNutrcional ? String(planAsignado.idPlanNutrcional) : "";
+    
+    console.log('handleValidar - rutina preseleccionada:', rutinaValue);
+    console.log('handleValidar - plan preseleccionado:', planValue);
+    
+    setRutina(rutinaValue);
+    setPlan(planValue);
     setPlatos(alumno.platos || []);
   };
 
   const handleEditar = (alumno: AlumnoConfiguracion) => {
     setSelectedAlumno(alumno);
     setIsEdit(true);
-    const rId = rutinasDisponibles.find(r => r.nombre === alumno.rutina)?.id;
-    const pId = planesDisponibles.find(p => p.nombre === alumno.plan)?.id;
-    setRutina(rId ? String(rId) : "");
-    setPlan(pId ? String(pId) : "");
+    
+    // 🔧 Precargar datos del alumno para edición
+    const rutinaAsignada = alumno.rutina;
+    const planAsignado = alumno.plan;
+    
+    const rutinaValue = rutinaAsignada?.idRutina ? String(rutinaAsignada.idRutina) : "";
+    const planValue = planAsignado?.idPlanNutrcional ? String(planAsignado.idPlanNutrcional) : "";
+    
+    console.log('handleEditar - rutina preseleccionada:', rutinaValue);
+    console.log('handleEditar - plan preseleccionado:', planValue);
+    
+    setRutina(rutinaValue);
+    setPlan(planValue);
     setPlatos(alumno.platos || []);
   };
 
@@ -101,27 +175,73 @@ const ConfiguracionAlumno = () => {
 
   const handleAsignar = async () => {
     if (!selectedAlumno) return;
+    
+    // Validar que se haya seleccionado al menos una rutina
+    if (!rutina) {
+      showError('Debe seleccionar una rutina');
+      return;
+    }
+    
     try {
       const rutinaId = Number(rutina);
-      const planId = Number(plan);
-      await api.put(
-        `/api/alumno/${selectedAlumno.idAlumno}/rutina/${rutinaId}`,
-        null,
-        { params: { idPlanNutricional: planId } }
-      );
+      const planId = plan ? Number(plan) : null;
+      
+      console.log('Asignando:', { rutinaId, planId, planSeleccionado: !!plan });
+      
+      // Construir la URL y parámetros condicionalmente
+      const url = `/api/alumno/${selectedAlumno.idAlumno}/rutina/${rutinaId}`;
+      const config: any = {};
+      
+      // Solo agregar el parámetro si se seleccionó un plan
+      if (planId !== null && planId !== 0) {
+        config.params = { idPlanNutricional: planId };
+        console.log('Enviando con plan nutricional:', planId);
+      } else {
+        console.log('Sin plan nutricional seleccionado');
+      }
+      
+      await api.put(url, null, config);
 
-      const rutinaNombre = rutinasDisponibles.find(r => r.id === rutinaId)?.nombre;
-      const planNombre = planesDisponibles.find(p => p.id === planId)?.nombre;
+      // 🔧 Buscar los objetos completos para actualizar el estado
+      const rutinaCompleta = rutinasDisponibles.find(r => r.idRutina === rutinaId);
+      const planCompleto = planId ? planesDisponibles.find(p => (p.idPlan || p.id) === planId) : null;
+      
+      console.log('Rutina completa encontrada:', rutinaCompleta);
+      console.log('Plan completo encontrado:', planCompleto);
+      
       setAlumnos(prev =>
         prev.map(a =>
           a.idAlumno === selectedAlumno.idAlumno
-            ? { ...a, validado: true, rutina: rutinaNombre, plan: planNombre, platos }
+            ? { 
+                ...a, 
+                validado: true,
+                rutinaActiva: true,
+                planActivo: !!planCompleto,
+                rutina: rutinaCompleta ? {
+                  idRutina: rutinaCompleta.idRutina,
+                  nombre: rutinaCompleta.nombre,
+                  objetivo: rutinaCompleta.objetivo,
+                  diasPorSemana: rutinaCompleta.diasPorSemana,
+                  // ... otros campos necesarios
+                } as Rutina : undefined,
+                plan: planCompleto ? {
+                  idPlanNutrcional: planCompleto.idPlan || planCompleto.id,
+                  nombreRutina: planCompleto.nombre,
+                  // ... otros campos necesarios
+                } as Plan : undefined,
+                platos 
+              }
             : a
         )
       );
-      showSuccess('Asignación realizada');
+      
+      const mensaje = planId 
+        ? 'Rutina y plan nutricional asignados correctamente' 
+        : 'Rutina asignada correctamente';
+      showSuccess(mensaje);
+      
     } catch (err) {
-      console.error(err);
+      console.error('Error al asignar:', err);
       showError('Error al asignar');
     } finally {
       setRutina('');
@@ -196,38 +316,92 @@ const ConfiguracionAlumno = () => {
           <Typography variant="subtitle1">Objetivos: {selectedAlumno?.objetivos.join(", ")}</Typography>
           <Typography variant="subtitle1">Actividad física: {selectedAlumno?.nivelDeActividadFisica}</Typography>
           <Typography variant="subtitle1">Datos adicionales: {selectedAlumno?.datosAdicionales}</Typography>
+          
+          {/* 🆕 Mostrar rutina y plan actuales si existen */}
+          {selectedAlumno?.rutina && (
+            <Typography variant="subtitle2" color="success.main" sx={{ mt: 1 }}>
+              ✅ Rutina actual: {selectedAlumno.rutina.nombre} ({selectedAlumno.rutina.objetivo})
+            </Typography>
+          )}
+          {selectedAlumno?.plan && (
+            <Typography variant="subtitle2" color="success.main">
+              ✅ Plan actual: {selectedAlumno.plan.nombreRutina}
+            </Typography>
+          )}
 
-          <TextField
-            select
-            label="Rutina personalizada"
-            fullWidth
-            margin="dense"
-            value={rutina}
-            onChange={(e) => setRutina(e.target.value)}
-          >
-            <MenuItem value="">
-              <em>Seleccione una rutina</em>
-            </MenuItem>
-            {rutinasDisponibles.map(r => (
-              <MenuItem key={r.id} value={r.id}>{r.nombre}</MenuItem>
-            ))}
-          </TextField>
+          <FormControl fullWidth margin="dense">
+            <InputLabel id="rutina-select-label">Rutina personalizada</InputLabel>
+            <Select
+              labelId="rutina-select-label"
+              id="rutina-select"
+              value={rutina || ''}
+              onChange={(event) => {
+                const value = event.target.value as string;
+                console.log('Rutina Select - Valor seleccionado:', value, typeof value);
+                
+                if (value !== undefined && value !== null && value !== "undefined") {
+                  if (value === "") {
+                    console.log('Valor vacío, limpiando rutina');
+                    setRutina("");
+                  } else {
+                    console.log('Valor válido, actualizando rutina a:', value);
+                    setRutina(value);
+                  }
+                } else {
+                  console.error('Valor inválido recibido:', value);
+                }
+              }}
+              label="Rutina personalizada"
+            >
+              <MenuItem value="">
+                <em>Seleccione una rutina</em>
+              </MenuItem>
+              {rutinasDisponibles
+                .filter(r => r && r.idRutina !== undefined && r.idRutina !== null && r.nombre)
+                .map(r => {
+                  console.log('Creando MenuItem para rutina:', r);
+                  const idString = String(r.idRutina);
+                  return (
+                    <MenuItem key={`rutina-${r.idRutina}`} value={idString}>
+                      {r.nombre}
+                    </MenuItem>
+                  );
+                })
+              }
+            </Select>
+          </FormControl>
 
-          <TextField
-            select
-            label="Plan nutricional"
-            fullWidth
-            margin="dense"
-            value={plan}
-            onChange={(e) => setPlan(e.target.value)}
-          >
-            <MenuItem value="">
-              <em>Seleccione un plan</em>
-            </MenuItem>
-            {planesDisponibles.map(p => (
-              <MenuItem key={p.id} value={p.id}>{p.nombre}</MenuItem>
-            ))}
-          </TextField>
+          <FormControl fullWidth margin="dense">
+            <InputLabel>Plan nutricional</InputLabel>
+            <Select
+              value={plan || ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                console.log('Plan Select - Value raw:', value);
+                console.log('Plan Select - Value tipo:', typeof value);
+                
+                if (value !== undefined && value !== null && value !== "undefined") {
+                  setPlan(String(value));
+                } else if (value === "") {
+                  setPlan("");
+                }
+              }}
+              label="Plan nutricional"
+              displayEmpty
+            >
+              <MenuItem value="">
+                <em>Seleccione un plan</em>
+              </MenuItem>
+              {planesDisponibles
+                .filter(p => p && p.id !== undefined && p.id !== null && p.nombre)
+                .map(p => (
+                  <MenuItem key={`plan-${p.id}`} value={String(p.id)}>
+                    {p.nombre}
+                  </MenuItem>
+                ))
+              }
+            </Select>
+          </FormControl>
 
           <TextField
             select
