@@ -22,6 +22,17 @@ class PlanesMembresiaService {
   delete(id: number) {
     return axios.delete(`${API_URL}/${id}`);
   }
+
+  assignPlanToAlumno(planId: number, alumnoId: number, estadoPago: string) {
+    return axios.put(
+      `${API_URL}/${planId}/alumno/${alumnoId}`,
+      null,
+      {
+        params: { estadoPago },
+        headers: { accept: "*/*" },
+      }
+    );
+  }
 }
 
 export default new PlanesMembresiaService();

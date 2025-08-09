@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -8,8 +8,12 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
   Grid,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -18,6 +22,9 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import PlanesMembresiaService from "../../services/PlanesMembresiaService";
+import AlumnosService from "../../services/AlumnosService";
+import { showError, showSuccess } from "../../utils/alerts";
 
 interface Pago {
   id: number;
@@ -26,33 +33,33 @@ interface Pago {
   fecha: string;
 }
 
-interface Alumno {
-  id: number;
+interface Plan {
+  idPlan: number;
   nombre: string;
-  deuda: number;
-  pagos: Pago[];
+}
+
+interface Alumno {
+  idAlumno: number;
+  nombre: string;
+  deuda?: number;
+  pagos?: Pago[];
 }
 
 const CuentasCorrientes = () => {
-  const [alumnos] = useState<Alumno[]>([
-    {
-      id: 1,
-      nombre: "Juan Pérez",
-      deuda: 1500,
-      pagos: [
-        { id: 1, descripcion: "Cuota Enero", monto: 1000, fecha: "2024-01-05" },
-        { id: 2, descripcion: "Clase adicional", monto: 500, fecha: "2024-01-10" },
-      ],
-    },
-    {
-      id: 2,
-      nombre: "María Gómez",
-      deuda: 800,
-      pagos: [{ id: 1, descripcion: "Cuota Enero", monto: 1200, fecha: "2024-01-02" }],
-    },
-  ]);
+  const [planes, setPlanes] = useState<Plan[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<number | "">("");
+  const [alumnos, setAlumnos] = useState<Alumno[]>([]);
   const [openDetalle, setOpenDetalle] = useState(false);
   const [selectedAlumno, setSelectedAlumno] = useState<Alumno | null>(null);
+
+  useEffect(() => {
+    PlanesMembresiaService.getAll()
+      .then((r) => setPlanes(r.data))
+      .catch(() => showError("Error al cargar planes"));
+    AlumnosService.getAll()
+      .then((r) => setAlumnos(r.data))
+      .catch(() => showError("Error al cargar alumnos"));
+  }, []);
 
   const handleVerDetalle = (alumno: Alumno) => {
     setSelectedAlumno(alumno);
@@ -60,13 +67,31 @@ const CuentasCorrientes = () => {
   };
 
   const totalPagos = alumnos.reduce(
-    (acc, a) => acc + a.pagos.reduce((s, p) => s + p.monto, 0),
+    (acc, a) => acc + (a.pagos?.reduce((s, p) => s + p.monto, 0) || 0),
     0
   );
-  const totalDeudas = alumnos.reduce((acc, a) => acc + a.deuda, 0);
+  const totalDeudas = alumnos.reduce((acc, a) => acc + (a.deuda || 0), 0);
   const totalPagadoAlumno = selectedAlumno
-    ? selectedAlumno.pagos.reduce((sum, p) => sum + p.monto, 0)
+    ? selectedAlumno.pagos?.reduce((sum, p) => sum + p.monto, 0) || 0
     : 0;
+
+  const handleAsignarPlan = async (alumnoId: number) => {
+    if (!selectedPlanId) {
+      showError("Seleccione un plan");
+      return;
+    }
+    try {
+      await PlanesMembresiaService.assignPlanToAlumno(
+        Number(selectedPlanId),
+        alumnoId,
+        "PENDIENTE"
+      );
+      showSuccess("Plan asignado correctamente");
+    } catch (error) {
+      console.error("Error al asignar plan", error);
+      showError("Error al asignar plan");
+    }
+  };
 
   return (
     <Box>
@@ -101,6 +126,22 @@ const CuentasCorrientes = () => {
         </Grid>
       </Grid>
 
+      <FormControl fullWidth sx={{ mb: 2 }}>
+        <InputLabel id="plan-select-label">Seleccionar Plan</InputLabel>
+        <Select
+          labelId="plan-select-label"
+          value={selectedPlanId}
+          label="Seleccionar Plan"
+          onChange={(e) => setSelectedPlanId(Number(e.target.value))}
+        >
+          {planes.map((plan) => (
+            <MenuItem key={plan.idPlan} value={plan.idPlan}>
+              {plan.nombre}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
       <TableContainer component={Paper} sx={{ mt: 2 }}>
         <Table>
           <TableHead>
@@ -113,10 +154,10 @@ const CuentasCorrientes = () => {
           </TableHead>
           <TableBody>
             {alumnos.map((al) => (
-              <TableRow key={al.id}>
-                <TableCell>{al.id}</TableCell>
+              <TableRow key={al.idAlumno}>
+                <TableCell>{al.idAlumno}</TableCell>
                 <TableCell>{al.nombre}</TableCell>
-                <TableCell>${al.deuda}</TableCell>
+                <TableCell>${al.deuda || 0}</TableCell>
                 <TableCell>
                   <Button
                     variant="outlined"
@@ -124,6 +165,14 @@ const CuentasCorrientes = () => {
                     onClick={() => handleVerDetalle(al)}
                   >
                     Ver Detalle
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleAsignarPlan(al.idAlumno)}
+                    sx={{ ml: 1 }}
+                  >
+                    Asignar Plan
                   </Button>
                 </TableCell>
               </TableRow>
@@ -146,7 +195,7 @@ const CuentasCorrientes = () => {
           {selectedAlumno && (
             <Box mb={2}>
               <Typography variant="body1" color="textSecondary">
-                Deuda Mensual: ${selectedAlumno.deuda}
+                Deuda Mensual: ${selectedAlumno.deuda || 0}
               </Typography>
               <Typography variant="body1" color="textSecondary">
                 Total Pagado: ${totalPagadoAlumno}
@@ -162,7 +211,7 @@ const CuentasCorrientes = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {selectedAlumno?.pagos.map((p) => (
+              {selectedAlumno?.pagos?.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell>{p.descripcion}</TableCell>
                   <TableCell>${p.monto}</TableCell>
