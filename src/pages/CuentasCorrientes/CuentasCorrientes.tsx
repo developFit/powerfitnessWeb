@@ -50,6 +50,8 @@ const CuentasCorrientes = () => {
   const [selectedPlanId, setSelectedPlanId] = useState<number | "">("");
   const [alumnos, setAlumnos] = useState<Alumno[]>([]);
   const [openDetalle, setOpenDetalle] = useState(false);
+  const [openAsignar, setOpenAsignar] = useState(false);
+  const [alumnoAsignar, setAlumnoAsignar] = useState<Alumno | null>(null);
   const [selectedAlumno, setSelectedAlumno] = useState<Alumno | null>(null);
 
   useEffect(() => {
@@ -75,23 +77,39 @@ const CuentasCorrientes = () => {
     ? selectedAlumno.pagos?.reduce((sum, p) => sum + p.monto, 0) || 0
     : 0;
 
-  const handleAsignarPlan = async (alumnoId: number) => {
-    if (!selectedPlanId) {
+  const handleOpenAsignarPlan = (alumno: Alumno) => {
+    setAlumnoAsignar(alumno);
+    setSelectedPlanId("");
+    setOpenAsignar(true);
+  };
+
+  const handleAsignarPlan = async () => {
+    if (!selectedPlanId || !alumnoAsignar) {
       showError("Seleccione un plan");
       return;
     }
     try {
       await PlanesMembresiaService.assignPlanToAlumno(
         Number(selectedPlanId),
-        alumnoId,
+        alumnoAsignar.idAlumno,
         "PENDIENTE"
       );
       showSuccess("Plan asignado correctamente");
+      setOpenAsignar(false);
+      setAlumnoAsignar(null);
+      setSelectedPlanId("");
     } catch (error) {
       console.error("Error al asignar plan", error);
       showError("Error al asignar plan");
     }
   };
+
+  const handleCloseAsignar = () => {
+    setOpenAsignar(false);
+    setAlumnoAsignar(null);
+    setSelectedPlanId("");
+  };
+
 
   return (
     <Box>
@@ -126,22 +144,6 @@ const CuentasCorrientes = () => {
         </Grid>
       </Grid>
 
-      <FormControl fullWidth sx={{ mb: 2 }}>
-        <InputLabel id="plan-select-label">Seleccionar Plan</InputLabel>
-        <Select
-          labelId="plan-select-label"
-          value={selectedPlanId}
-          label="Seleccionar Plan"
-          onChange={(e) => setSelectedPlanId(Number(e.target.value))}
-        >
-          {planes.map((plan) => (
-            <MenuItem key={plan.idPlan} value={plan.idPlan}>
-              {plan.nombre}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
       <TableContainer component={Paper} sx={{ mt: 2 }}>
         <Table>
           <TableHead>
@@ -169,7 +171,7 @@ const CuentasCorrientes = () => {
                   <Button
                     variant="contained"
                     color="primary"
-                    onClick={() => handleAsignarPlan(al.idAlumno)}
+                    onClick={() => handleOpenAsignarPlan(al)}
                     sx={{ ml: 1 }}
                   >
                     Asignar Plan
@@ -180,6 +182,43 @@ const CuentasCorrientes = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      <Dialog
+        open={openAsignar}
+        onClose={(e, r) => {
+          if (r === 'backdropClick' || r === 'escapeKeyDown') return;
+          handleCloseAsignar();
+        }}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Asignar Plan a {alumnoAsignar?.nombre}</DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth>
+            <InputLabel id="plan-modal-select-label">Seleccionar Plan</InputLabel>
+            <Select
+              labelId="plan-modal-select-label"
+              value={selectedPlanId}
+              label="Seleccionar Plan"
+              onChange={(e) => setSelectedPlanId(Number(e.target.value))}
+            >
+              {planes.map((plan) => (
+                <MenuItem key={plan.idPlan} value={plan.idPlan}>
+                  {plan.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseAsignar} color="inherit">
+            Cancelar
+          </Button>
+          <Button onClick={handleAsignarPlan} color="primary" variant="contained">
+            Asignar
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={openDetalle}
