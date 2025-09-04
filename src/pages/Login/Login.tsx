@@ -36,7 +36,7 @@ const Login = () => {
             </Box>
             <Typography variant="h6" textAlign="center" sx={{ mb: 2 }}>Ingresar</Typography>
             <TextField label="Usuario" variant="outlined" fullWidth margin="normal" value={username} onChange={e => setUsername(e.target.value)} />
-            <TextField label="Contrase\u00f1a" type="password" variant="outlined" fullWidth margin="normal" value={password} onChange={e => setPassword(e.target.value)} />
+            <TextField label="Contraseña" type="password" variant="outlined" fullWidth margin="normal" value={password} onChange={e => setPassword(e.target.value)} />
             {error && <Typography color="error" variant="body2">{error}</Typography>}
             <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>Login</Button>
           </form>
