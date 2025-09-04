@@ -52,7 +52,7 @@ const Alumnos = () => {
 
   useEffect(() => {
     AlumnosService.getAll()
-      .then(r => setItems(r.data))
+      .then(r => setItems(r.data.reverse()))
       .catch(() => showError('Error al cargar alumnos'));
   }, []);
 
@@ -77,18 +77,45 @@ const Alumnos = () => {
     setOpenForm(true);
   };
 
-  const handleGuardar = async () => {
-    try {
-      const response = await AlumnosService.create(nuevo);
-      const guardado = response.data || nuevo;
-      setItems([...items, guardado]);
-      showSuccess('Alumno guardado correctamente');
-    } catch (error) {
-      showError('Error al guardar alumno');
-    } finally {
-      setOpenForm(false);
+const handleGuardar = async () => {
+  try {
+    // Validar campos vacíos
+    if (!nuevo.nombre || !nuevo.email || !nuevo.username || !nuevo.password || !nuevo.telefono) {
+      showError("Por favor, complete todos los campos.");
+      return;
     }
-  };
+
+    // Validar nombre (solo letras y espacios)
+    const nombreRegex = /^[a-zA-ZÀ-ÿ\s]+$/;
+    if (!nombreRegex.test(nuevo.nombre)) {
+      showError("El nombre solo puede contener letras y espacios.");
+      return;
+    }
+
+    // Validar teléfono (solo números, opcionalmente con espacios o guiones)
+    const telefonoRegex = /^[0-9\s-]+$/;
+    if (!telefonoRegex.test(nuevo.telefono)) {
+      showError("El teléfono solo puede contener números, espacios o guiones.");
+      return;
+    }
+
+    // Guardar el nuevo alumno
+    await AlumnosService.create(nuevo);
+
+    // Volver a traer la lista actualizada desde el backend
+    const response = await AlumnosService.getAll();
+    setItems(response.data.reverse());
+
+    showSuccess('Alumno guardado exitosamente!');
+    setOpenForm(false);
+  } catch (error) {
+    showError('Por favor, completar todos los datos para crear un nuevo alumno!');
+  }
+  //  finally {
+  //   setOpenForm(false);
+  // }
+};
+
 
   const handleVerDetalle = (alumno: Item) => {
     setSelectedAlumno(alumno);
@@ -106,15 +133,22 @@ const Alumnos = () => {
   return (
     <Box>
       <Typography variant="h5" gutterBottom color="orange">Gestión de Alumnos</Typography>
-      <Button variant="contained" color="warning" onClick={handleOpenForm}>
-        Nuevo Alumno
-      </Button>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "16px" }}>
+        <Button 
+          variant="contained" 
+          color="warning" 
+          onClick={handleOpenForm}
+          startIcon={<span style={{ fontWeight: "bold" }}>+</span>}
+        >
+          Nuevo Alumno
+        </Button>
+  </div>
       <TableContainer component={Paper} sx={{ mt: 2, backgroundColor: "#1e1e1e" }}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ color: "#FFA726" }}>ID</TableCell>
-              <TableCell sx={{ color: "#FFA726" }}>Nombre</TableCell>
+              <TableCell sx={{ color: "#FFA726" }}>ID Alumno</TableCell>
+              <TableCell sx={{ color: "#FFA726" }}>Alumno</TableCell>
               <TableCell sx={{ color: "#FFA726" }}>Teléfono</TableCell>
               <TableCell sx={{ color: "#FFA726" }}>Acciones</TableCell>
             </TableRow>
@@ -126,7 +160,7 @@ const Alumnos = () => {
                 <TableCell sx={{ color: "#fff" }}>{item.nombre}</TableCell>
                 <TableCell sx={{ color: "#fff" }}>{item.telefono}</TableCell>
                 <TableCell>
-                  <Button variant="outlined" color="warning" onClick={() => handleVerDetalle(item)}>Detalle</Button>
+                  <Button variant="outlined" color="warning" onClick={() => handleVerDetalle(item)}>Ver detalles</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -141,7 +175,7 @@ const Alumnos = () => {
           setOpenForm(false);
         }}
       >
-        <DialogTitle>Nuevo Alumno</DialogTitle>
+        <DialogTitle>+ Nuevo Alumno</DialogTitle>
       <DialogContent>
         <TextField fullWidth margin="dense" label="Nombre" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} />
         <TextField fullWidth margin="dense" label="Email" value={nuevo.email} onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })} />
@@ -192,7 +226,7 @@ const Alumnos = () => {
           )}
           {tabIndex === 1 && (
             <Box sx={{ mt: 2 }}>
-              <Typography color="orange">Nombre: {selectedAlumno?.nombreCompleto}</Typography>
+              <Typography color="orange">Nombre: {selectedAlumno?.nombre}</Typography>
               <Typography color="orange">Teléfono: {selectedAlumno?.telefono}</Typography>
               <Typography color="orange">Edad: {selectedAlumno?.edad}</Typography>
               <Typography color="orange">Altura: {selectedAlumno?.altura}</Typography>
@@ -201,8 +235,8 @@ const Alumnos = () => {
           )}
           {tabIndex === 2 && (
             <Box sx={{ mt: 2 }}>
-              <Typography color="orange">Objetivos: Ganar masa muscular</Typography>
-              <Typography color="orange">Rutina asignada: Rutina A</Typography>
+              <Typography color="orange">Objetivos:</Typography>
+              <Typography color="orange">Rutina asignada:</Typography>
             </Box>
           )}
         </DialogContent>
