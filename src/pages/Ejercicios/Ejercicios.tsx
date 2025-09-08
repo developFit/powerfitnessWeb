@@ -25,7 +25,7 @@ import EjerciciosService from "../../services/EjerciciosService";
 import { showError, showSuccess } from "../../utils/alerts";
 
 interface Ejercicio {
-  id: number;
+  idEjercicio: number;
   nombre: string;
   explicacion: string;
   urlVideo: string;
@@ -37,7 +37,7 @@ const Ejercicios = () => {
   const [open, setOpen] = useState(false);
   const [detalle, setDetalle] = useState<Ejercicio | null>(null);
   const [actual, setActual] = useState<Ejercicio>({
-    id: 0,
+    idEjercicio: 0,
     nombre: '',
     explicacion: '',
     urlVideo: '',
@@ -52,12 +52,12 @@ const Ejercicios = () => {
 
   const handleGuardar = async () => {
     try {
-      if (actual.id) {
-        await EjerciciosService.update(actual.id, actual);
-        setItems(items.map(i => (i.id === actual.id ? actual : i)));
+      if (actual.idEjercicio) {
+        await EjerciciosService.update(actual.idEjercicio, actual);
+        setItems(items.map(i => (i.idEjercicio === actual.idEjercicio ? actual : i)));
       } else {
         const response = await EjerciciosService.create(actual);
-        const nuevo = response.data || { ...actual, id: items.length + 1 };
+        const nuevo = response.data || { ...actual, idEjercicio: items.length + 1 };
         setItems([...items, nuevo]);
       }
       showSuccess('Ejercicio guardado');
@@ -65,14 +65,14 @@ const Ejercicios = () => {
       showError('Error al guardar ejercicio');
     } finally {
       setOpen(false);
-      setActual({ id: 0, nombre: '', explicacion: '', urlVideo: '', imagen: '' });
+      setActual({ idEjercicio: 0, nombre: '', explicacion: '', urlVideo: '', imagen: '' });
     }
   };
 
-  const handleEliminar = async (id: number) => {
+  const handleEliminar = async (idEjercicio: number) => {
     try {
-      await EjerciciosService.delete(id);
-      setItems(items.filter(i => i.id !== id));
+      await EjerciciosService.delete(idEjercicio);
+      setItems(items.filter(i => i.idEjercicio !== idEjercicio));
       showSuccess('Ejercicio eliminado');
     } catch {
       showError('Error al eliminar ejercicio');
@@ -97,8 +97,8 @@ const Ejercicios = () => {
           </TableHead>
           <TableBody>
             {items.map(item => (
-              <TableRow key={item.id}>
-                <TableCell>{item.id}</TableCell>
+              <TableRow key={item.idEjercicio}>
+                <TableCell>{item.idEjercicio}</TableCell>
                 <TableCell>{item.nombre}</TableCell>
                 <TableCell>
                   <IconButton color="info" onClick={() => setDetalle(item)}>
@@ -107,7 +107,7 @@ const Ejercicios = () => {
                   <IconButton color="primary" onClick={() => { setActual(item); setOpen(true); }}>
                     <EditIcon />
                   </IconButton>
-                  <IconButton color="error" onClick={() => handleEliminar(item.id)}>
+                  <IconButton color="error" onClick={() => handleEliminar(item.idEjercicio)}>
                     <DeleteIcon />
                   </IconButton>
                 </TableCell>
@@ -118,7 +118,7 @@ const Ejercicios = () => {
       </TableContainer>
 
       <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>{actual.id ? 'Editar Ejercicio' : 'Nuevo Ejercicio'}</DialogTitle>
+        <DialogTitle>{actual.idEjercicio ? 'Editar Ejercicio' : 'Nuevo Ejercicio'}</DialogTitle>
         <DialogContent>
           <TextField fullWidth margin="dense" label="Nombre" value={actual.nombre} onChange={e => setActual({ ...actual, nombre: e.target.value })} />
           <TextField fullWidth margin="dense" label="Explicación" value={actual.explicacion} onChange={e => setActual({ ...actual, explicacion: e.target.value })} />

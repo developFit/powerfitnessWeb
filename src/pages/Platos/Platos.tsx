@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -15,26 +15,39 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  IconButton,
 } from "@mui/material";
 import api from "../../services/api";
 import { showError, showSuccess } from "../../utils/alerts";
+import PlatosService from "../../services/PlatosService";
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 interface Item {
-  id: number;
+  idPlatoSugerido: number;
   nombre: string;
   descripcion: string;
   calorias: string;
-  imagen?: string;
+  urlImagen?: string;
+  ingredientes: string
 }
 
 const Platos = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [open, setOpen] = useState(false);
-  const [nuevo, setNuevo] = useState<Item>({ id: 0, nombre: "", descripcion: "", calorias: "", imagen: "" });
+  const [nuevo, setNuevo] = useState<Item>({ idPlatoSugerido: 0, nombre: "", descripcion: "", calorias: "", urlImagen: "", ingredientes: "" });
   const [imagenFile, setImagenFile] = useState<File | null>(null);
 
+  useEffect(() => {
+    PlatosService.getAll().then((resp) =>{
+      setItems(resp)
+    })
+  },[])
+
+
   const handleOpen = () => {
-    setNuevo({ id: 0, nombre: "", descripcion: "", calorias: "", imagen: "" });
+    setNuevo({ idPlatoSugerido: 0, nombre: "", descripcion: "", calorias: "", urlImagen: "", ingredientes: ""});
     setImagenFile(null);
     setOpen(true);
   };
@@ -59,13 +72,14 @@ const Platos = () => {
 
   const handleGuardar = async () => {
     try {
-      let urlImagen = nuevo.imagen;
       if (imagenFile) {
-        urlImagen = await subirImagen(imagenFile);
+        //urlImagen = await subirImagen(imagenFile);
       }
 
-      const nuevoPlato = { ...nuevo, imagen: urlImagen, id: items.length + 1 };
-      setItems([...items, nuevoPlato]);
+      const nuevoPlato = { ...nuevo, imagen: imagenFile, idPlatoSugerido: items.length + 1 };
+      //setItems([...items, nuevoPlato]);
+      PlatosService.create(nuevoPlato)
+
       setOpen(false);
       showSuccess("Plato guardado correctamente");
     } catch (error) {
@@ -73,6 +87,18 @@ const Platos = () => {
       console.error(error);
     }
   };
+
+  function handleVerDetalle(item: Item): void {
+    throw new Error("Function not implemented.");
+  }
+
+  function handleEditar(item: Item): void {
+    throw new Error("Function not implemented.");
+  }
+
+  function handleEliminar(item: Item): void {
+    throw new Error("Function not implemented.");
+  }
 
   return (
     <Box>
@@ -90,19 +116,31 @@ const Platos = () => {
               <TableCell>Descripción</TableCell>
               <TableCell>Calorías</TableCell>
               <TableCell>Imagen</TableCell>
+              <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {items.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.id}</TableCell>
+              <TableRow key={item.idPlatoSugerido}>
+                <TableCell>{item.idPlatoSugerido}</TableCell>
                 <TableCell>{item.nombre}</TableCell>
                 <TableCell>{item.descripcion}</TableCell>
                 <TableCell>{item.calorias}</TableCell>
                 <TableCell>
-                  {item.imagen && (
-                    <img src={item.imagen} alt={item.nombre} width="50" height="50" style={{ objectFit: "cover" }} />
+                  {item.urlImagen && (
+                    <img src={item.urlImagen} alt={item.nombre} width="50" height="50" style={{ objectFit: "cover" }} />
                   )}
+                </TableCell>
+                <TableCell>
+                  <IconButton color="info" onClick={() => handleVerDetalle(item)}>
+                    <VisibilityIcon />
+                  </IconButton>
+                  <IconButton color="primary" onClick={() => handleEditar(item)}>
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton color="error" onClick={() => handleEliminar(item)}>
+                    <DeleteIcon />
+                  </IconButton>
                 </TableCell>
               </TableRow>
             ))}
@@ -122,6 +160,7 @@ const Platos = () => {
           <TextField fullWidth margin="dense" label="Nombre" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} />
           <TextField fullWidth margin="dense" label="Descripción" value={nuevo.descripcion} onChange={(e) => setNuevo({ ...nuevo, descripcion: e.target.value })} />
           <TextField fullWidth margin="dense" label="Calorías" value={nuevo.calorias} onChange={(e) => setNuevo({ ...nuevo, calorias: e.target.value })} />
+          <TextField fullWidth margin="dense" label="Ingredientes" value={nuevo.ingredientes} onChange={(e) => setNuevo({ ...nuevo, ingredientes: e.target.value })} />
           
           <Box mt={2}>
             <input type="file" accept="image/*" onChange={handleImagenChange} />

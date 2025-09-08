@@ -69,6 +69,8 @@ interface AlumnoConfiguracion {
   plan?: Plan;     // 🔧 Ahora es un objeto, no string
   planActivo: boolean;
   platos?: string[];
+  nombre: string;
+
 }
 
 // 1. Corregir la interface para reflejar la estructura real
@@ -112,9 +114,8 @@ const ConfiguracionAlumno = () => {
         setRutinasDisponibles(rutRes.data || []);
         
         const planRes = await PlanesNutricionalesService.getAll();
-        console.log('Planes response completo:', planRes);
-        console.log('Planes data estructura:', planRes.data);
-        setPlanesDisponibles(planRes.data || []);
+        
+        setPlanesDisponibles(planRes || []);
       } catch (err) {
         console.error('Error al cargar datos:', err);
       } finally {
@@ -204,7 +205,7 @@ const ConfiguracionAlumno = () => {
 
       // 🔧 Buscar los objetos completos para actualizar el estado
       const rutinaCompleta = rutinasDisponibles.find(r => r.idRutina === rutinaId);
-      const planCompleto = planId ? planesDisponibles.find(p => (p.idPlan || p.id) === planId) : null;
+      const planCompleto = planId ? planesDisponibles.find(p => (p.idPlan || p.idPlanNutrcional) === planId) : null;
       
       console.log('Rutina completa encontrada:', rutinaCompleta);
       console.log('Plan completo encontrado:', planCompleto);
@@ -225,7 +226,7 @@ const ConfiguracionAlumno = () => {
                   // ... otros campos necesarios
                 } as Rutina : undefined,
                 plan: planCompleto ? {
-                  idPlanNutrcional: planCompleto.idPlan || planCompleto.id,
+                  idPlanNutrcional: planCompleto.idPlan || planCompleto.idPlanNutrcional,
                   nombreRutina: planCompleto.nombre,
                   // ... otros campos necesarios
                 } as Plan : undefined,
@@ -253,7 +254,7 @@ const ConfiguracionAlumno = () => {
 
   return (
     <Box>
-      <Typography variant="h5" gutterBottom color="orange">Validación de alumnos</Typography>
+      <Typography variant="h5" gutterBottom color="orange">Validación de rutinas</Typography>
       {loading ? (
         <CircularProgress />
       ) : (
@@ -270,7 +271,7 @@ const ConfiguracionAlumno = () => {
             <TableBody>
               {alumnos.map((alumno) => (
                 <TableRow key={alumno.email}>
-                  <TableCell sx={{ color: "#fff" }}>{alumno.nombreCompleto}</TableCell>
+                  <TableCell sx={{ color: "#fff" }}>{alumno.nombreCompleto || alumno.nombre}</TableCell>
                   <TableCell sx={{ color: "#fff" }}>{alumno.email}</TableCell>
                   <TableCell sx={{ color: "#fff" }}>{alumno.validado ? "Validado" : "Pendiente"}</TableCell>
                   <TableCell>
@@ -382,20 +383,17 @@ const ConfiguracionAlumno = () => {
                 
                 if (value !== undefined && value !== null && value !== "undefined") {
                   setPlan(String(value));
-                } else if (value === "") {
+                } else if (value == 'undefined') {
                   setPlan("");
                 }
               }}
               label="Plan nutricional"
               displayEmpty
             >
-              <MenuItem value="">
-                <em>Seleccione un plan</em>
-              </MenuItem>
               {planesDisponibles
-                .filter(p => p && p.id !== undefined && p.id !== null && p.nombre)
+                .filter(p => p && p.idPlan !== undefined && p.idPlan !== null && p.nombre)
                 .map(p => (
-                  <MenuItem key={`plan-${p.id}`} value={String(p.id)}>
+                  <MenuItem key={`plan-${p.idPlan}`} value={String(p.idPlan)}>
                     {p.nombre}
                   </MenuItem>
                 ))
@@ -414,9 +412,14 @@ const ConfiguracionAlumno = () => {
               setPlatos(typeof e.target.value === "string" ? e.target.value.split(",") : (e.target.value as string[]))
             }
           >
-            <MenuItem value="plato1">Plato 1</MenuItem>
-            <MenuItem value="plato2">Plato 2</MenuItem>
-            <MenuItem value="plato3">Plato 3</MenuItem>
+            {planesDisponibles
+                .filter(p => p && p.idPlan !== undefined && p.idPlan !== null && p.nombre)
+                .map(p => (
+                  <MenuItem key={`plan-${p.idPlan}`} value={String(p.idPlan)}>
+                    {p.nombre}
+                  </MenuItem>
+                ))
+              }
           </TextField>
         </DialogContent>
         <DialogActions>
