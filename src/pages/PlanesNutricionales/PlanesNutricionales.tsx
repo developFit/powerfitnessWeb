@@ -84,7 +84,7 @@ interface ItemNuevo {
   nombre: string;
   descripcion: string;
   calorias: string;
-  ingredientes: string
+  ingredientes: string,
 }
 
 const PlanesNutricionales = () => {
@@ -94,22 +94,33 @@ const PlanesNutricionales = () => {
   const [valorPlato, setValorPlato] = useState("");
   const [platos, setPlatos] = useState<Item[]>([]);
   const [platosExistentes, setPlatosExistentes] = useState<Item[]>([]);
-  const [platosNuevos, setPlatosNuevos] = useState<ItemNuevo[]>([])
+  const [platosNuevos, setPlatosNuevos] = useState<any[]>([])
   const [nuevoPlato, setNuevoPlato] = useState<ItemNuevo>({nombre: "", descripcion: "", calorias: "", ingredientes: "" });
   const [imagenFile, setImagenFile] = useState<File | null>(null);
   
+  useEffect(() => {
+    PlatosService.getAll().then((resp) =>{
+      setPlatosExistentes(resp);
+    })
+  },[])
 
   const handleGuardarPlatosNuevos = (plato: any) => {
+    if(imagenFile == null){
+        showError("Debe agregar una imagen");
+        return;
+    }
     if(plato && plato.nombre != ""){
-      const resultado = platosNuevos.find((p) => p.nombre == plato.nombre);
-      if (!resultado) {
+      const resultado = platosNuevos.find((p) => p.nombre.toLowerCase() == plato.nombre.toLowerCase());
+      const resultadoPlatosExistentes = platosExistentes.find((p) => p.nombre.toLowerCase() == plato.nombre.toLowerCase())
+      if (!resultado && !resultadoPlatosExistentes) {
         const nuevoPlatoParaLista = {...nuevoPlato, imagen: imagenFile}
         setPlatosNuevos([...platosNuevos.filter((p) => p.nombre != ""), nuevoPlatoParaLista])
         setNuevoPlato({nombre: "", descripcion: "", calorias: "", ingredientes: "" });
         setImagenFile(null);
-
       }
-      console.log(platosNuevos)
+      else{
+        showError("Ya existe ese plato, intenta agregarlo como existente")
+      }
     }
   }
 
@@ -130,43 +141,68 @@ const PlanesNutricionales = () => {
   };
 
   const handleAddPlatoExistente = () => {
-    PlatosService.getAll().then((resp) =>{
-      setPlatosExistentes(resp);
       setValorPlato("platoExistente");
       setNuevo(emptyPlan);
-    })
   }
 
   const handleAddPlato = () => {
     setValorPlato("nuevoPlato");
   };
 
+  const crearPlatos = async () => {
+    if(platosNuevos.length > 0){
+      platosNuevos.forEach(async (p) => {
+        const exiteUnPlato = platosExistentes.find( pe => p.nombre.toLowerCase() == pe.nombre.toLowerCase())
+        console.log("Plato: ", exiteUnPlato, p)
+        if(!exiteUnPlato){
+          await PlatosService.create(p)
+        }
+      });
+    }
+  }
+
   const handleGuardar = () => {
     try {
-      const nuevoPlan = { ...nuevo, id: items.length + 1 };
-      PlanesNutricionalesService.create(nuevoPlan).then((resp) => {
-        setItems([...items, nuevoPlan]);
-        setOpen(false);
-        showSuccess(resp);
+      if(false){
+        const nuevoPlan = { ...nuevo, id: items.length + 1 };
+        PlanesNutricionalesService.create(nuevoPlan).then((resp) => {
+          setItems([...items, nuevoPlan]);
+          setOpen(false);
+          showSuccess(resp);
+        })
+      }
+
+      crearPlatos().then(() => {
+        PlatosService.getAll().then((resp) => {
+          setPlatosExistentes(resp);
+        }).then(() => {
+          setPlatos(platosExistentes.filter((elementoActual: Item) => platosNuevos.some((a) => elementoActual.nombre.toLowerCase() == a.nombre.toLowerCase()) || 
+                                                    platos.some((b) => elementoActual.idPlatoSugerido == b.idPlatoSugerido)))
+        })
       })
+
+      
+      console.log(platos)
       
     } catch (error) {
       showError("Error al guardar plan");
     }
   };
 
-  const handleSeleccionarPlatoExistente = (idPlato: string) => {
+  const handleSeleccionarPlatoExistente = (platoExistenteSeleccionado: string) => {
     try{
+      const platoSelect = JSON.parse(platoExistenteSeleccionado)
+      const resultado = platos.find((p) => p.idPlatoSugerido == Number(platoSelect.idPlatoSugerido) || p.nombre == platoSelect.nombre)
+      const resultadoEnListaNuevosPlatos = platosNuevos.find((p) => p.nombre == platoSelect.nombre)
+      if(!resultado && !resultadoEnListaNuevosPlatos){
 
-      const resultado = platos.find((p) => p.idPlatoSugerido == Number(idPlato))
-
-      if(!resultado){
-
-        const platoEncontrado = platosExistentes.find(p => p.idPlatoSugerido == Number(idPlato));
+        const platoEncontrado = platosExistentes.find(p => p.idPlatoSugerido == Number(platoSelect.idPlatoSugerido));
 
         if(platoEncontrado){
           setPlatos([...platos, platoEncontrado]);
         }
+      }else{
+        showError("Ya hay un plato con ese nombre en la lista")
       }
     }
     catch (error) {
@@ -386,7 +422,7 @@ const PlanesNutricionales = () => {
                 {platosExistentes
                     .filter(p => p && p.idPlatoSugerido !== undefined && p.idPlatoSugerido !== null && p.nombre)
                     .map(p => (
-                      <MenuItem key={p.idPlatoSugerido} value={p.idPlatoSugerido} style={{display: "flex", justifyContent: "space-between"}}>
+                      <MenuItem key={p.idPlatoSugerido} value={JSON.stringify(p)} style={{display: "flex", justifyContent: "space-between"}}>
                         {p.nombre} <img src={p.urlImagen} alt="" width={100} height={100}/>
                       </MenuItem>
                     ))
@@ -428,6 +464,35 @@ const PlanesNutricionales = () => {
                 <CloseIcon></CloseIcon>
                 {p.nombre}
                 <img src={p.urlImagen}  alt="Imagen del plato" width="100" height="100" style={{ objectFit: "contain", borderRadius: "10px", }} />
+              </Button>
+              
+            ))
+          }
+
+          {platosNuevos
+            .map(p => (
+              <Button key={p.nombre}
+              sx={{
+                display:"flex",
+                alignItems: "center",
+                padding: "10px",
+                borderRadius: "10px",
+                fontWeight: "bold",
+                "&:hover": {
+                  backgroundColor: "#ed6c02",
+                  cursor: "pointer",
+                  color: "white"
+                }
+              }}
+              onClick={(e) => {
+                setPlatosNuevos(prev => prev.filter((plato) => plato.nombre != p.nombre));
+              }}>
+                <CloseIcon></CloseIcon>
+                {p.nombre}
+                {p && p?.imagen && (
+                    <img src={URL.createObjectURL(p?.imagen)}  alt="Imagen del plato" width="100" height="100" style={{ objectFit: "contain", borderRadius: "10px", }} />
+                  ) 
+                }
               </Button>
               
             ))
