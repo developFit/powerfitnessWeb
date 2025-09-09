@@ -6,7 +6,6 @@ class PlanesNutricionalesService {
   async getAll() {
     try{
       const response = await axios.get("/api/planesNutricionales");
-      console.log(response.data)
       return response.data
     }
     catch (error){

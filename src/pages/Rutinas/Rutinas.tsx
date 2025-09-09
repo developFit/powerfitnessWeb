@@ -58,11 +58,15 @@ interface DiaRutina {
 }
 
 interface Rutina {
-  idAlumno: number;
+  idRutina: number;
+  nivelRutina: string;
   nombre: string;
   objetivo: string;
   diasPorSemana: string;
+  tiempo: string;
+  alumno: Alumno;
   dias: DiaRutina[];
+  estadoRutina: string;
 }
 
 const diasSemana = [
@@ -85,12 +89,21 @@ const gruposMusculares = [
   "Abdominales",
 ];
 
-const emptyRutina: Rutina = {
+const emptyAlumno: Alumno = {
   idAlumno: 0,
+  nombre: ""
+}
+
+const emptyRutina: Rutina = {
+  idRutina: 0,
   nombre: '',
   objetivo: '',
   diasPorSemana: '1',
-  dias: [{ dia: 'Lunes', ejercicios: [] }]
+  dias: [{ dia: 'Lunes', ejercicios: [] }],
+  nivelRutina: "",
+  tiempo: "",
+  alumno: emptyAlumno,
+  estadoRutina: ""
 };
 
 const Rutinas = () => {
@@ -168,7 +181,7 @@ const Rutinas = () => {
   const handleExport = () => {
     const header = ['Alumno', 'Nombre', 'Objetivo', 'DiasPorSemana'];
     const rows = items.map(r => [
-      alumnos.find(a => a.idAlumno === r.idAlumno)?.nombre || r.idAlumno,
+      alumnos.find(a => a.idAlumno === r?.alumno?.idAlumno)?.nombre || r.idRutina,
       r.nombre,
       r.objetivo,
       r.diasPorSemana
@@ -188,7 +201,7 @@ const Rutinas = () => {
   const handleGuardar = async () => {
     const payload: Rutina = {
       ...rutina,
-      idAlumno: Number(rutina.idAlumno),
+      idRutina: Number(rutina.idRutina),
       dias: (rutina.dias || []).map(d => ({
         ...d,
         ejercicios: (d.ejercicios || []).map(e => ({
@@ -225,12 +238,12 @@ const Rutinas = () => {
   return (
     <Box>
       <Typography variant="h5">Rutinas</Typography>
-      <Box display="flex" gap={1}>
-        <Button variant="contained" onClick={() => setOpen(true)}>
-          Crear Rutina
-        </Button>
+      <Box display="flex" gap={1} justifyContent={"end"}>
         <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExport}>
           Exportar
+        </Button>
+        <Button variant="contained" onClick={() => setOpen(true)}>
+          <AddIcon></AddIcon>Crear Rutina
         </Button>
       </Box>
 
@@ -283,10 +296,10 @@ const Rutinas = () => {
           <FormControl fullWidth margin="dense">
             <InputLabel>Alumno</InputLabel>
             <Select
-              value={rutina.idAlumno || ''}
+              value={""}
               onChange={e => {
-                const val = e.target.value;
-                setRutina({ ...rutina, idAlumno: val === '' ? 0 : Number(val) });
+                const val = JSON.parse(e.target.value);
+                setRutina({ ...rutina, alumno: val});
               }}
               label="Alumno"
             >
@@ -294,7 +307,7 @@ const Rutinas = () => {
                 <em>Seleccione un alumno</em>
               </MenuItem>
               {alumnos.map(a => (
-                <MenuItem key={a.idAlumno} value={a.idAlumno}>{a.nombre}</MenuItem>
+                <MenuItem key={a.idAlumno} value={JSON.stringify(a)}>{a.nombre}</MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -319,7 +332,11 @@ const Rutinas = () => {
             value={rutina.diasPorSemana}
             onChange={e => setRutina({ ...rutina, diasPorSemana: e.target.value })}
           />
-
+          <div style={{display: "flex", justifyContent: "end"}}>
+            <Button size="small" onClick={handleAgregarDia} startIcon={<AddIcon />} sx={{ mt: 2 }}>
+              Agregar Día
+            </Button>
+          </div>
           {rutina.dias?.map((d, i) => (
             <Box key={i} sx={{ border: '1px solid #ccc', mt: 2, p: 2 }}>
               <FormControl fullWidth margin="dense">
@@ -488,9 +505,6 @@ const Rutinas = () => {
               </Button>
             </Box>
           ))}
-          <Button size="small" onClick={handleAgregarDia} startIcon={<AddIcon />} sx={{ mt: 2 }}>
-            Agregar Día
-          </Button>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancelar</Button>
@@ -508,13 +522,14 @@ const Rutinas = () => {
         fullWidth
       >
         <DialogTitle>
-          Detalle de {alumnos.find(a => a.idAlumno === detalle?.idAlumno)?.nombre}
+          Detalle de rutina por alumno {detalle?.alumno?.nombre}
         </DialogTitle>
+        
         <DialogContent dividers>
           {detalle && (
             <Box>
               <Typography><strong>Nombre:</strong> {detalle.nombre}</Typography>
-              <Typography><strong>Objetivo:</strong> {detalle.objetivo}</Typography>
+              <Typography><strong>Objetivo del alumno:</strong> {detalle.objetivo}</Typography>
               <Typography><strong>Días por semana:</strong> {detalle.diasPorSemana}</Typography>
               {detalle?.dias?.map((d, i) => (
                 <Box key={i} sx={{ mt: 2 }}>

@@ -21,6 +21,8 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+
 import { showError, showSuccess } from "../../utils/alerts";
 import PlanesNutricionalesService from "../../services/PlanesNutricionalesService";
 import PlatosService from "../../services/PlatosService";
@@ -34,27 +36,20 @@ interface Plato {
 }
 
 interface Plan {
-  id: number;
+  idPlanNutrcional: number;
   nombre: string;
   desayuno: string;
   almuerzo: string;
   cena: string;
   colaciones: string[];
-  platos: Plato[];
+  platos: Item[];
   nombreRutina: string;
   tips: string;
 }
 
-const emptyPlato: Plato = {
-  idPlatoSugerido: 0,
-  nombre: "",
-  descripcion: "",
-  calorias: 0,
-  ingredientes: ""
-};
 
 const emptyPlan: Plan = {
-  id: 0,
+  idPlanNutrcional: 0,
   nombre: "",
   desayuno: "",
   almuerzo: "",
@@ -91,96 +86,38 @@ const PlanesNutricionales = () => {
   const [items, setItems] = useState<Plan[]>([]);
   const [open, setOpen] = useState(false);
   const [nuevo, setNuevo] = useState<Plan>(emptyPlan);
-  const [valorPlato, setValorPlato] = useState("");
   const [platos, setPlatos] = useState<Item[]>([]);
   const [platosExistentes, setPlatosExistentes] = useState<Item[]>([]);
-  const [platosNuevos, setPlatosNuevos] = useState<any[]>([])
-  const [nuevoPlato, setNuevoPlato] = useState<ItemNuevo>({nombre: "", descripcion: "", calorias: "", ingredientes: "" });
-  const [imagenFile, setImagenFile] = useState<File | null>(null);
-  
+  const [detalle, setDetalle] = useState<Plan | null>(null);
+
   useEffect(() => {
     PlatosService.getAll().then((resp) =>{
       setPlatosExistentes(resp);
+    });
+
+    PlanesNutricionalesService.getAll().then((resp) => {
+      setItems(resp);
     })
   },[])
-
-  const handleGuardarPlatosNuevos = (plato: any) => {
-    if(imagenFile == null){
-        showError("Debe agregar una imagen");
-        return;
-    }
-    if(plato && plato.nombre != ""){
-      const resultado = platosNuevos.find((p) => p.nombre.toLowerCase() == plato.nombre.toLowerCase());
-      const resultadoPlatosExistentes = platosExistentes.find((p) => p.nombre.toLowerCase() == plato.nombre.toLowerCase())
-      if (!resultado && !resultadoPlatosExistentes) {
-        const nuevoPlatoParaLista = {...nuevoPlato, imagen: imagenFile}
-        setPlatosNuevos([...platosNuevos.filter((p) => p.nombre != ""), nuevoPlatoParaLista])
-        setNuevoPlato({nombre: "", descripcion: "", calorias: "", ingredientes: "" });
-        setImagenFile(null);
-      }
-      else{
-        showError("Ya existe ese plato, intenta agregarlo como existente")
-      }
-    }
-  }
 
   const handleOpen = () => {
     setNuevo(emptyPlan);
     setOpen(true);
   };
 
-  const handleImagenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        setImagenFile(file);
-      }
-  };
-
   const handleAddColacion = () => {
     setNuevo((prev) => ({ ...prev, colaciones: [...prev.colaciones, ""] }));
   };
 
-  const handleAddPlatoExistente = () => {
-      setValorPlato("platoExistente");
-      setNuevo(emptyPlan);
-  }
-
-  const handleAddPlato = () => {
-    setValorPlato("nuevoPlato");
-  };
-
-  const crearPlatos = async () => {
-    if(platosNuevos.length > 0){
-      platosNuevos.forEach(async (p) => {
-        const exiteUnPlato = platosExistentes.find( pe => p.nombre.toLowerCase() == pe.nombre.toLowerCase())
-        console.log("Plato: ", exiteUnPlato, p)
-        if(!exiteUnPlato){
-          await PlatosService.create(p)
-        }
-      });
-    }
-  }
-
   const handleGuardar = () => {
     try {
-      if(false){
-        const nuevoPlan = { ...nuevo, id: items.length + 1 };
-        PlanesNutricionalesService.create(nuevoPlan).then((resp) => {
-          setItems([...items, nuevoPlan]);
-          setOpen(false);
-          showSuccess(resp);
-        })
-      }
-
-      crearPlatos().then(() => {
-        PlatosService.getAll().then((resp) => {
-          setPlatosExistentes(resp);
-        }).then(() => {
-          setPlatos(platosExistentes.filter((elementoActual: Item) => platosNuevos.some((a) => elementoActual.nombre.toLowerCase() == a.nombre.toLowerCase()) || 
-                                                    platos.some((b) => elementoActual.idPlatoSugerido == b.idPlatoSugerido)))
-        })
+      
+      const nuevoPlan = { ...nuevo, id: items.length + 1 , platos: platos};
+      PlanesNutricionalesService.create(nuevoPlan).then((resp) => {
+        setItems([...items, nuevoPlan]);
+        setOpen(false);
+        showSuccess(resp);
       })
-
       
       console.log(platos)
       
@@ -189,12 +126,15 @@ const PlanesNutricionales = () => {
     }
   };
 
+  const handleVerDetalle = (item: Plan) => {
+    setDetalle(item);
+  };
+
   const handleSeleccionarPlatoExistente = (platoExistenteSeleccionado: string) => {
     try{
       const platoSelect = JSON.parse(platoExistenteSeleccionado)
       const resultado = platos.find((p) => p.idPlatoSugerido == Number(platoSelect.idPlatoSugerido) || p.nombre == platoSelect.nombre)
-      const resultadoEnListaNuevosPlatos = platosNuevos.find((p) => p.nombre == platoSelect.nombre)
-      if(!resultado && !resultadoEnListaNuevosPlatos){
+      if(!resultado){
 
         const platoEncontrado = platosExistentes.find(p => p.idPlatoSugerido == Number(platoSelect.idPlatoSugerido));
 
@@ -215,9 +155,11 @@ const PlanesNutricionales = () => {
       <Typography variant="h5" gutterBottom>
         Gestión de Planes Nutricionales
       </Typography>
-      <Button variant="contained" color="warning" onClick={handleOpen}>
-        Nuevo Plan Nutricional
-      </Button>
+      <div style={{display: "flex", justifyContent: "end"}}>
+        <Button variant="contained" color="warning" onClick={handleOpen}>
+          <AddIcon></AddIcon> Nuevo Plan Nutricional
+        </Button>
+      </div>
       <TableContainer component={Paper} sx={{ mt: 2 }}>
         <Table>
           <TableHead>
@@ -225,14 +167,20 @@ const PlanesNutricionales = () => {
               <TableCell>ID</TableCell>
               <TableCell>Nombre</TableCell>
               <TableCell>Rutina</TableCell>
+              <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {items.map((plan) => (
-              <TableRow key={plan.id}>
-                <TableCell>{plan.id}</TableCell>
+              <TableRow key={plan.idPlanNutrcional}>
+                <TableCell>{plan.idPlanNutrcional}</TableCell>
                 <TableCell>{plan.nombre}</TableCell>
                 <TableCell>{plan.nombreRutina}</TableCell>
+                <TableCell>
+                  <IconButton color="info" onClick={() => handleVerDetalle(plan)}>
+                    <VisibilityIcon/>
+                  </IconButton>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -318,89 +266,10 @@ const PlanesNutricionales = () => {
           <Button startIcon={<AddIcon />} onClick={handleAddColacion} sx={{ mt: 1 }}>
             Agregar Colación
           </Button>
-          <Typography sx={{ mt: 2 }}>Platos</Typography>
           
-          <Button startIcon={<AddIcon />} onClick={handleAddPlato} sx={{ mt: 1, "&:hover": {
-                  backgroundColor: "#ed6c02",
-                  cursor: "pointer",
-                  color: "white"
-                } }}>
-            Agregar Plato
-          </Button>
-          <Button sx={{
-            "&:hover": {
-                  backgroundColor: "#ed6c02",
-                  cursor: "pointer",
-                  color: "white"
-                }
-          }} startIcon={<AddIcon/>} onClick={handleAddPlatoExistente}> 
-            Agregar plato existente
-          </Button>
-          {valorPlato == 'nuevoPlato' ? (
-            <Box sx={{ border: "1px solid #ccc", p: 1, mt: 1 }}>
-              <TextField
-                  fullWidth
-                  label="Nombre"
-                  margin="dense"
-                  value={nuevoPlato.nombre}
-                  onChange={(e) => setNuevoPlato({ ...nuevoPlato, nombre: e.target.value })}
-                />
-                <TextField
-                  fullWidth
-                  label="Descripción"
-                  margin="dense"
-                  value={nuevoPlato.descripcion}
-                  onChange={(e) => setNuevoPlato({ ...nuevoPlato, descripcion: e.target.value })}
-                />
-                <TextField
-                  fullWidth
-                  label="Calorías"
-                  margin="dense"
-                  type="number"
-                  value={nuevoPlato.calorias}
-                  onChange={(e) => setNuevoPlato({ ...nuevoPlato, calorias: e.target.value })}
-                />
-                <TextField
-                  fullWidth
-                  label="Ingredientes"
-                  margin="dense"
-                  value={nuevoPlato.ingredientes}
-                  onChange={(e) => setNuevoPlato({ ...nuevoPlato, ingredientes: e.target.value })}
-                />
-
-                <Box mt={2}>
-                  <input type="file" accept="image/*" onChange={handleImagenChange} />
-                    {imagenFile && (
-                      <Box mt={1}>
-                        <Typography variant="body2">Vista previa:</Typography>
-                        <img src={URL.createObjectURL(imagenFile)} alt="Vista previa" width="100" height="100" style={{ objectFit: "cover" }} />
-                      </Box>
-                    )}
-                </Box>
-
-                <div style={{display: "flex", justifyContent: "end"}}>
-                  <IconButton
-                    sx={{
-                      "&:hover": {
-                        backgroundColor: "green",
-                        cursor: "pointer",
-                        color: "white"
-                      }
-                    }}
-                    aria-label="add"
-                    onClick={() => handleGuardarPlatosNuevos(nuevoPlato)}
-                  >
-                    <AddIcon />
-                  </IconButton>
-                </div>
-              </Box>
-          )
-            
-            :
-            (<div></div>)
-          }
-          {valorPlato == 'platoExistente' ? 
-            (
+          <Typography sx={{ mt: 2 }}>Platos</Typography>
+        
+          
               <TextField
                 select
                 label="Platos sugeridos"
@@ -428,19 +297,11 @@ const PlanesNutricionales = () => {
                     ))
                   }
               </TextField>
-            )
-            
-            :
-
-            (<div></div>)
-          }
           <div  style={{
                 display: "flex",
                 alignItems: "center",
                 gap: 1,
-                border: "1px solid #ccc",
                 borderRadius: "8px",
-                padding: "4px 8px",
                 backgroundColor: "#f5f5f5"
               }}>
             {platos
@@ -468,35 +329,6 @@ const PlanesNutricionales = () => {
               
             ))
           }
-
-          {platosNuevos
-            .map(p => (
-              <Button key={p.nombre}
-              sx={{
-                display:"flex",
-                alignItems: "center",
-                padding: "10px",
-                borderRadius: "10px",
-                fontWeight: "bold",
-                "&:hover": {
-                  backgroundColor: "#ed6c02",
-                  cursor: "pointer",
-                  color: "white"
-                }
-              }}
-              onClick={(e) => {
-                setPlatosNuevos(prev => prev.filter((plato) => plato.nombre != p.nombre));
-              }}>
-                <CloseIcon></CloseIcon>
-                {p.nombre}
-                {p && p?.imagen && (
-                    <img src={URL.createObjectURL(p?.imagen)}  alt="Imagen del plato" width="100" height="100" style={{ objectFit: "contain", borderRadius: "10px", }} />
-                  ) 
-                }
-              </Button>
-              
-            ))
-          }
           </div>
           <TextField
             fullWidth
@@ -513,6 +345,43 @@ const PlanesNutricionales = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog
+              open={!!detalle}
+              onClose={(e, r) => {
+                if (r === 'backdropClick' || r === 'escapeKeyDown') return;
+                setDetalle(null);
+              }}
+              maxWidth="sm"
+              fullWidth
+            >
+              <DialogTitle style={{backgroundColor: "#ed6c02", color: "white"}}>
+                Detalle de {detalle?.nombreRutina}
+              </DialogTitle>
+              <DialogContent dividers>
+                {detalle && (
+                  <Box>
+                    <Typography><strong>Nombre:</strong> {detalle.nombreRutina}</Typography>
+                    <Typography><strong>Platos:</strong> {detalle?.platos?.length || 0}</Typography>
+                    {detalle?.platos?.map((d, i) => (
+                      <div style={{display: "flex", justifyContent: "space-between", alignContent: "center"}}>
+                        <Box key={i} sx={{ mt: 2 }}>
+                          <Typography variant="subtitle1"><strong>{d.nombre}</strong></Typography>
+                          <Typography variant="subtitle2" style={{textDecoration: "underline"}}>Ingredientes:</Typography>
+                          <ul>
+                            <li>{d.ingredientes}</li>
+                          </ul>
+                        </Box>
+                        <img src={d.urlImagen} alt="" width={100} height={100}/>
+                      </div>
+                    ))}
+                  </Box>
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setDetalle(null)}>Cerrar</Button>
+              </DialogActions>
+            </Dialog>
     </Box>
   );
 };

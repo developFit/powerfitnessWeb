@@ -25,7 +25,7 @@ function App() {
       <Route element={<ProtectedLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/alumnos" element={<Alumnos />} />
-        <Route path="/ConfiguracionAlumnos" element={<ConfiguracionAlumno />} />
+        <Route path="/validarRutinas" element={<ConfiguracionAlumno />} />
         <Route path="/rutinas" element={<Rutinas />} />
         <Route path="/platos" element={<Platos />} />
         <Route path="/ejercicios" element={<Ejercicios />} />

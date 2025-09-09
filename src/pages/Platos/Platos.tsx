@@ -20,6 +20,7 @@ import {
 import api from "../../services/api";
 import { showError, showSuccess } from "../../utils/alerts";
 import PlatosService from "../../services/PlatosService";
+import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -103,9 +104,14 @@ const Platos = () => {
   return (
     <Box>
       <Typography variant="h5" gutterBottom>Gestión de Platos</Typography>
-      <Button variant="contained" color="warning" onClick={handleOpen}>
-        Nuevo Plato
-      </Button>
+      <div style={{
+        display: "flex",
+        justifyContent: "end"
+      }}>
+        <Button variant="contained" color="warning" onClick={handleOpen}>
+          <AddIcon></AddIcon> Nuevo Plato
+        </Button>
+      </div>
 
       <TableContainer component={Paper} sx={{ mt: 2 }}>
         <Table>

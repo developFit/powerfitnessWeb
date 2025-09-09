@@ -81,10 +81,9 @@ interface RutinaDisponible {
   diasPorSemana: number;
 }
 
-interface PlanDisponible {
-  idPlan?: number;           // Para rutinas disponibles
+interface PlanDisponible {      // Para rutinas disponibles
   idPlanNutrcional?: number; // Para el plan asignado (con typo de la API)
-  nombre: string;
+  nombreRutina: string;
 }
 
 const ConfiguracionAlumno = () => {
@@ -104,17 +103,12 @@ const ConfiguracionAlumno = () => {
       setLoading(true);
       try {
         const res = await api.get<AlumnoConfiguracion[]>("/api/getconfiguracionAlumnos");
-        console.log('Alumnos cargados:', res.data);
         setAlumnos(res.data);
         
         const rutRes = await RutinasService.getAll();
-        console.log('Rutinas response completo:', rutRes);
-        console.log('Rutinas data estructura:', rutRes.data);
-        console.log('Primera rutina:', rutRes.data[0]);
         setRutinasDisponibles(rutRes.data || []);
         
         const planRes = await PlanesNutricionalesService.getAll();
-        
         setPlanesDisponibles(planRes || []);
       } catch (err) {
         console.error('Error al cargar datos:', err);
@@ -129,22 +123,13 @@ const ConfiguracionAlumno = () => {
     setSelectedAlumno(alumno);
     setIsEdit(false);
     
-    console.log('handleValidar - alumno:', alumno);
-    console.log('handleValidar - rutinasDisponibles:', rutinasDisponibles);
-    
     // 🔧 Ahora rutina es un objeto, no un string
     const rutinaAsignada = alumno.rutina;
     const planAsignado = alumno.plan;
     
-    console.log('handleValidar - rutinaAsignada:', rutinaAsignada);
-    console.log('handleValidar - planAsignado:', planAsignado);
-    
     // Precargar los valores en los selects
     const rutinaValue = rutinaAsignada?.idRutina ? String(rutinaAsignada.idRutina) : "";
     const planValue = planAsignado?.idPlanNutrcional ? String(planAsignado.idPlanNutrcional) : "";
-    
-    console.log('handleValidar - rutina preseleccionada:', rutinaValue);
-    console.log('handleValidar - plan preseleccionado:', planValue);
     
     setRutina(rutinaValue);
     setPlan(planValue);
@@ -161,9 +146,6 @@ const ConfiguracionAlumno = () => {
     
     const rutinaValue = rutinaAsignada?.idRutina ? String(rutinaAsignada.idRutina) : "";
     const planValue = planAsignado?.idPlanNutrcional ? String(planAsignado.idPlanNutrcional) : "";
-    
-    console.log('handleEditar - rutina preseleccionada:', rutinaValue);
-    console.log('handleEditar - plan preseleccionado:', planValue);
     
     setRutina(rutinaValue);
     setPlan(planValue);
@@ -187,8 +169,6 @@ const ConfiguracionAlumno = () => {
       const rutinaId = Number(rutina);
       const planId = plan ? Number(plan) : null;
       
-      console.log('Asignando:', { rutinaId, planId, planSeleccionado: !!plan });
-      
       // Construir la URL y parámetros condicionalmente
       const url = `/api/alumno/${selectedAlumno.idAlumno}/rutina/${rutinaId}`;
       const config: any = {};
@@ -196,7 +176,6 @@ const ConfiguracionAlumno = () => {
       // Solo agregar el parámetro si se seleccionó un plan
       if (planId !== null && planId !== 0) {
         config.params = { idPlanNutricional: planId };
-        console.log('Enviando con plan nutricional:', planId);
       } else {
         console.log('Sin plan nutricional seleccionado');
       }
@@ -205,10 +184,7 @@ const ConfiguracionAlumno = () => {
 
       // 🔧 Buscar los objetos completos para actualizar el estado
       const rutinaCompleta = rutinasDisponibles.find(r => r.idRutina === rutinaId);
-      const planCompleto = planId ? planesDisponibles.find(p => (p.idPlan || p.idPlanNutrcional) === planId) : null;
-      
-      console.log('Rutina completa encontrada:', rutinaCompleta);
-      console.log('Plan completo encontrado:', planCompleto);
+      const planCompleto = planId ? planesDisponibles.find(p => (p.idPlanNutrcional || p.idPlanNutrcional) === planId) : null;
       
       setAlumnos(prev =>
         prev.map(a =>
@@ -226,8 +202,8 @@ const ConfiguracionAlumno = () => {
                   // ... otros campos necesarios
                 } as Rutina : undefined,
                 plan: planCompleto ? {
-                  idPlanNutrcional: planCompleto.idPlan || planCompleto.idPlanNutrcional,
-                  nombreRutina: planCompleto.nombre,
+                  idPlanNutrcional: planCompleto.idPlanNutrcional || planCompleto.idPlanNutrcional,
+                  nombreRutina: planCompleto.nombreRutina,
                   // ... otros campos necesarios
                 } as Plan : undefined,
                 platos 
@@ -277,7 +253,7 @@ const ConfiguracionAlumno = () => {
                   <TableCell>
                     {alumno.validado ? (
                       <>
-                        <Button startIcon={<CheckIcon />} disabled color="success" variant="contained" sx={{ mr: 1 }}>
+                        <Button startIcon={<CheckIcon />} color="success" variant="contained" sx={{ mr: 1 }}>
                           Validado
                         </Button>
                         <Button onClick={() => handleEditar(alumno)} startIcon={<EditIcon />} color="warning" variant="outlined" sx={{ mr: 1 }}>
@@ -338,14 +314,11 @@ const ConfiguracionAlumno = () => {
               value={rutina || ''}
               onChange={(event) => {
                 const value = event.target.value as string;
-                console.log('Rutina Select - Valor seleccionado:', value, typeof value);
                 
                 if (value !== undefined && value !== null && value !== "undefined") {
                   if (value === "") {
-                    console.log('Valor vacío, limpiando rutina');
                     setRutina("");
                   } else {
-                    console.log('Valor válido, actualizando rutina a:', value);
                     setRutina(value);
                   }
                 } else {
@@ -360,7 +333,6 @@ const ConfiguracionAlumno = () => {
               {rutinasDisponibles
                 .filter(r => r && r.idRutina !== undefined && r.idRutina !== null && r.nombre)
                 .map(r => {
-                  console.log('Creando MenuItem para rutina:', r);
                   const idString = String(r.idRutina);
                   return (
                     <MenuItem key={`rutina-${r.idRutina}`} value={idString}>
@@ -378,8 +350,6 @@ const ConfiguracionAlumno = () => {
               value={plan || ''}
               onChange={(e) => {
                 const value = e.target.value;
-                console.log('Plan Select - Value raw:', value);
-                console.log('Plan Select - Value tipo:', typeof value);
                 
                 if (value !== undefined && value !== null && value !== "undefined") {
                   setPlan(String(value));
@@ -391,10 +361,10 @@ const ConfiguracionAlumno = () => {
               displayEmpty
             >
               {planesDisponibles
-                .filter(p => p && p.idPlan !== undefined && p.idPlan !== null && p.nombre)
+                .filter(p => p && p.idPlanNutrcional !== undefined && p.idPlanNutrcional !== null && p.nombreRutina)
                 .map(p => (
-                  <MenuItem key={`plan-${p.idPlan}`} value={String(p.idPlan)}>
-                    {p.nombre}
+                  <MenuItem key={`plan-${p.idPlanNutrcional}`} value={String(p.idPlanNutrcional)}>
+                    {p.nombreRutina}
                   </MenuItem>
                 ))
               }
@@ -413,10 +383,10 @@ const ConfiguracionAlumno = () => {
             }
           >
             {planesDisponibles
-                .filter(p => p && p.idPlan !== undefined && p.idPlan !== null && p.nombre)
+                .filter(p => p && p.idPlanNutrcional !== undefined && p.idPlanNutrcional !== null)
                 .map(p => (
-                  <MenuItem key={`plan-${p.idPlan}`} value={String(p.idPlan)}>
-                    {p.nombre}
+                  <MenuItem key={`plan-${p.idPlanNutrcional}`} value={String(p.idPlanNutrcional)}>
+                    {p.nombreRutina}
                   </MenuItem>
                 ))
               }
