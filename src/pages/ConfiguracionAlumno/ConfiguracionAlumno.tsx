@@ -79,6 +79,9 @@ interface RutinaDisponible {
   nombre: string;
   objetivo: string;
   diasPorSemana: number;
+  alumno: {
+    idAlumno: number
+  }
 }
 
 interface PlanDisponible {      // Para rutinas disponibles
@@ -331,7 +334,7 @@ const ConfiguracionAlumno = () => {
                 <em>Seleccione una rutina</em>
               </MenuItem>
               {rutinasDisponibles
-                .filter(r => r && r.idRutina !== undefined && r.idRutina !== null && r.nombre)
+                .filter(r => r && r.idRutina !== undefined && r.idRutina !== null && r.nombre && selectedAlumno?.idAlumno == r?.alumno.idAlumno)
                 .map(r => {
                   const idString = String(r.idRutina);
                   return (
@@ -371,26 +374,6 @@ const ConfiguracionAlumno = () => {
             </Select>
           </FormControl>
 
-          <TextField
-            select
-            label="Platos sugeridos"
-            fullWidth
-            margin="dense"
-            SelectProps={{ multiple: true }}
-            value={platos}
-            onChange={(e) =>
-              setPlatos(typeof e.target.value === "string" ? e.target.value.split(",") : (e.target.value as string[]))
-            }
-          >
-            {planesDisponibles
-                .filter(p => p && p.idPlanNutrcional !== undefined && p.idPlanNutrcional !== null)
-                .map(p => (
-                  <MenuItem key={`plan-${p.idPlanNutrcional}`} value={String(p.idPlanNutrcional)}>
-                    {p.nombreRutina}
-                  </MenuItem>
-                ))
-              }
-          </TextField>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setSelectedAlumno(null)} color="inherit">Cancelar</Button>

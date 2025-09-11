@@ -20,7 +20,7 @@ class RutinasService {
   }
 
   delete(id: number) {
-    return axios.delete(`${API_URL}/${id}`);
+    return axios.delete(`/api/rutinas/${id}`);
   }
 }
 

@@ -166,7 +166,6 @@ const PlanesNutricionales = () => {
             <TableRow>
               <TableCell>ID</TableCell>
               <TableCell>Nombre</TableCell>
-              <TableCell>Rutina</TableCell>
               <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
@@ -174,7 +173,6 @@ const PlanesNutricionales = () => {
             {items.map((plan) => (
               <TableRow key={plan.idPlanNutrcional}>
                 <TableCell>{plan.idPlanNutrcional}</TableCell>
-                <TableCell>{plan.nombre}</TableCell>
                 <TableCell>{plan.nombreRutina}</TableCell>
                 <TableCell>
                   <IconButton color="info" onClick={() => handleVerDetalle(plan)}>
@@ -198,17 +196,11 @@ const PlanesNutricionales = () => {
       >
         <DialogTitle>Nuevo Plan Nutricional</DialogTitle>
         <DialogContent>
+
           <TextField
             fullWidth
             margin="dense"
             label="Nombre"
-            value={nuevo.nombre}
-            onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })}
-          />
-          <TextField
-            fullWidth
-            margin="dense"
-            label="Nombre de Rutina"
             value={nuevo.nombreRutina}
             onChange={(e) => setNuevo({ ...nuevo, nombreRutina: e.target.value })}
           />
