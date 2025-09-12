@@ -109,7 +109,7 @@ const ConfiguracionAlumno = () => {
         setAlumnos(res.data);
         
         const rutRes = await RutinasService.getAll();
-        setRutinasDisponibles(rutRes.data || []);
+        setRutinasDisponibles(rutRes || []);
         
         const planRes = await PlanesNutricionalesService.getAll();
         setPlanesDisponibles(planRes || []);

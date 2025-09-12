@@ -24,6 +24,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import CloseIcon from '@mui/icons-material/Close';
 
 interface Item {
   idPlatoSugerido: number;
@@ -31,25 +32,32 @@ interface Item {
   descripcion: string;
   calorias: string;
   urlImagen?: string;
-  ingredientes: string
+  ingredientes: string;
+  estadoPlato: string;
 }
 
 const Platos = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [open, setOpen] = useState(false);
-  const [nuevo, setNuevo] = useState<Item>({ idPlatoSugerido: 0, nombre: "", descripcion: "", calorias: "", urlImagen: "", ingredientes: "" });
+  const [nuevo, setNuevo] = useState<Item>({ idPlatoSugerido: 0, nombre: "", descripcion: "", calorias: "", urlImagen: "", ingredientes: "", estadoPlato: "" });
   const [imagenFile, setImagenFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [detalleOpen, setDetalleOpen] = useState<boolean>(false)
+  const [platoSeleccionado, setPlatoSeleccionado] = useState<Item>();
+
+  const [editOpen, setEditOpen] = useState<boolean>(false)
+  const [itemsEliminacionMasiva, setItemsEliminacionMasiva] = useState<Item[]>([]);
+
   
   useEffect(() => {
     PlatosService.getAll().then((resp) =>{
-      setItems(resp)
+      setItems(resp.filter((p:Item) => p.estadoPlato == "ACTIVO"))
     })
   },[])
 
 
   const handleOpen = () => {
-    setNuevo({ idPlatoSugerido: 0, nombre: "", descripcion: "", calorias: "", urlImagen: "", ingredientes: ""});
+    setNuevo({ idPlatoSugerido: 0, nombre: "", descripcion: "", calorias: "", urlImagen: "", ingredientes: "", estadoPlato: ""});
     setImagenFile(null);
     setOpen(true);
   };
@@ -90,16 +98,45 @@ const Platos = () => {
     }
   };
 
+  const handleGuardarEdicion = async () => {
+    PlatosService.update(platoSeleccionado, imagenFile).then((resp) => {
+      showSuccess(resp);
+      setEditOpen(false);
+      setPlatoSeleccionado(undefined);
+      PlatosService.getAll().then((resp) =>{
+        setItems(resp.filter((p:Item) => p.estadoPlato == "ACTIVO"))
+      })
+    })
+  }
+
   function handleVerDetalle(item: Item): void {
-    throw new Error("Function not implemented.");
+    setDetalleOpen(true);
+    setPlatoSeleccionado(item);
   }
 
   function handleEditar(item: Item): void {
-    throw new Error("Function not implemented.");
+    setEditOpen(true);
+    if(platoSeleccionado?.idPlatoSugerido == item.idPlatoSugerido){
+      return;
+    }
+    else{
+      setPlatoSeleccionado(item);
+    }
   }
 
   function handleEliminar(item: Item): void {
-    throw new Error("Function not implemented.");
+    PlatosService.delete(item.idPlatoSugerido).then((resp: string) => {
+        showSuccess(resp);
+        PlatosService.getAll().then((resp) =>{
+        setItems(resp.filter((p:Item) => p.estadoPlato == "ACTIVO"))
+      })
+    })
+  }
+
+  const handleEliminarPlatos = () => {
+    itemsEliminacionMasiva.forEach(plato => {
+      handleEliminar(plato);
+    })
   }
 
   return (
@@ -109,16 +146,28 @@ const Platos = () => {
         display: "flex",
         justifyContent: "end"
       }}>
-        <Button variant="contained" color="warning" onClick={handleOpen}>
-          <AddIcon></AddIcon> Nuevo Plato
-        </Button>
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: "5px"
+        }}>
+          {itemsEliminacionMasiva.length > 0 ? 
+            <Button variant="contained" color="warning" onClick={handleEliminarPlatos}>
+              <DeleteIcon></DeleteIcon> Eliminar platos
+            </Button>
+            : ""
+          }
+          <Button variant="contained" color="warning" onClick={handleOpen}>
+            <AddIcon></AddIcon> Nuevo Plato
+          </Button>
+        </div>
       </div>
 
       <TableContainer component={Paper} sx={{ mt: 2 }}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>ID</TableCell>
+              <TableCell></TableCell>
               <TableCell>Nombre</TableCell>
               <TableCell>Descripción</TableCell>
               <TableCell>Calorías</TableCell>
@@ -129,7 +178,14 @@ const Platos = () => {
           <TableBody>
             {items.map((item) => (
               <TableRow key={item.idPlatoSugerido}>
-                <TableCell>{item.idPlatoSugerido}</TableCell>
+                <TableCell><input type="checkbox" style={{cursor: "pointer"}} onChange={(e) => {
+                  if(e.target.checked){
+                    setItemsEliminacionMasiva([...itemsEliminacionMasiva, item])
+                  }
+                  else{
+                    setItemsEliminacionMasiva(itemsEliminacionMasiva.filter(plato => plato.idPlatoSugerido != item.idPlatoSugerido))
+                  }
+                }}/></TableCell>
                 <TableCell>{item.nombre}</TableCell>
                 <TableCell>{item.descripcion}</TableCell>
                 <TableCell>{item.calorias}</TableCell>
@@ -188,6 +244,103 @@ const Platos = () => {
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancelar</Button>
           <Button variant="contained" onClick={handleGuardar}>Guardar</Button>
+        </DialogActions>
+      </Dialog>
+      
+      <Dialog open={detalleOpen} onClose={() => setDetalleOpen(false)}>
+        <DialogActions>
+          <CloseIcon onClick={() => setDetalleOpen(false)}></CloseIcon>
+        </DialogActions>
+        <DialogTitle>
+            <strong>Plato: </strong>{platoSeleccionado?.nombre}
+        </DialogTitle>
+        <DialogContent>
+            <p><strong>Calorias: </strong>{platoSeleccionado?.calorias}</p>
+            <p><strong>Ingredientes: </strong>{platoSeleccionado?.ingredientes}</p>
+            <p><strong>Descripcion: </strong>{platoSeleccionado?.descripcion}</p>
+            <img src={platoSeleccionado?.urlImagen} alt={"Imagen del plato " + platoSeleccionado?.nombre} width={200} height={200} style={{objectFit: "contain"}}/>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)}>
+        <DialogTitle style={{textAlign: "center"}}>
+            <strong>Edicion de plato</strong>
+        </DialogTitle>
+        <DialogContent sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "5px"
+        }}>
+            <div>
+              <strong>Nombre: </strong>
+              <TextField
+                fullWidth
+                margin="dense"
+                value={platoSeleccionado?.nombre}
+                onChange={e => {
+                  if(platoSeleccionado){
+                    setPlatoSeleccionado({ ...platoSeleccionado, nombre: e.target.value })
+                  }
+                }}
+              />
+            </div>
+            <div>
+              <strong>Calorias: </strong>
+              <TextField
+                fullWidth
+                margin="dense"
+                value={platoSeleccionado?.calorias}
+                onChange={e => {
+                  if(platoSeleccionado){
+                    setPlatoSeleccionado({ ...platoSeleccionado, calorias: e.target.value })
+                  }
+                }}
+              />
+            </div>
+            <div>
+              <strong>Ingredientes: </strong>
+              <TextField
+                fullWidth
+                margin="dense"
+                value={platoSeleccionado?.ingredientes}
+                onChange={e => {
+                  if(platoSeleccionado){
+                    setPlatoSeleccionado({ ...platoSeleccionado, ingredientes: e.target.value })
+                  }
+                }}
+              />
+            </div>
+            <div>
+              <strong>Descripcion: </strong>
+              <TextField
+                fullWidth
+                margin="dense"
+                value={platoSeleccionado?.descripcion}
+                onChange={e => {
+                  if(platoSeleccionado){
+                    setPlatoSeleccionado({ ...platoSeleccionado, descripcion: e.target.value })
+                  }
+                }}
+              />
+            </div>
+            <div style={{textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center"}}>
+              <strong>Imagen del plato: </strong>
+              <img src={
+                imagenFile 
+                ? URL.createObjectURL(imagenFile)
+                : platoSeleccionado?.urlImagen
+              } alt={"Imagen del plato " + platoSeleccionado?.nombre} width={200} height={200} style={{objectFit: "contain"}}/>
+              <input type="file" accept="image/*" onChange={handleImagenChange} ref={fileInputRef}/> 
+            </div>
+            
+        </DialogContent>
+        <DialogActions>
+              <Button onClick={() => {
+                setImagenFile(null);
+                setEditOpen(false);
+                setPlatoSeleccionado(undefined);
+              }}>Cancelar</Button>
+              <Button variant="contained" onClick={handleGuardarEdicion}>Guardar</Button>
         </DialogActions>
       </Dialog>
     </Box>

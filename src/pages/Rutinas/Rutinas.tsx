@@ -175,7 +175,12 @@ const Rutinas = () => {
           RutinasService.getAll()
           .then(r =>{
             setItems(r)
-            setItemsFiltrados(r.filter( (i: Rutina)=> i.alumno.idAlumno == alumnoSeleccionado?.idAlumno))
+            if(alumnoSeleccionado && alumnoSeleccionado.idAlumno > 0){
+              setItemsFiltrados(r.filter( (i: Rutina)=> i.alumno.idAlumno == alumnoSeleccionado?.idAlumno && i.estadoRutina == "ACTIVO"))
+            }
+            else{
+              setItemsFiltrados(r.filter( (i: Rutina)=> i.estadoRutina == "ACTIVO"))
+            }
           } )
           .catch(() => {});
         });
@@ -387,7 +392,10 @@ const Rutinas = () => {
                   {esSeleccionMultiple && (
                     <input type="checkbox" onChange={(e) => {
                       if(e.target.checked){
-                        setRutinasParaExportar([...rutinasParaExportar, r])
+                        setRutinasParaExportar([...rutinasParaExportar, r]);
+                      }
+                      else{
+                        setRutinasParaExportar(rutinasParaExportar.filter(rutina => rutina.idRutina != r.idRutina))
                       }
                     }}/>
                   )}

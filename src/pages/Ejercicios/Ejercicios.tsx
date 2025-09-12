@@ -30,7 +30,8 @@ interface Ejercicio {
   explicacion: string;
   urlVideo: string;
   imagenUrl?: string;
-  imagen?: File
+  imagen?: File,
+  estadoEjercicio: string;
 }
 
 const Ejercicios = () => {
@@ -43,20 +44,29 @@ const Ejercicios = () => {
     explicacion: '',
     urlVideo: '',
     imagenUrl: '',
+    estadoEjercicio: ''
   });
+  const [ejercicioAEditar, setEjercicioAEditar] = useState<Ejercicio>();
+
   const [imagenFile, setImagenFile] = useState<File | undefined>(undefined);
 
   useEffect(() => {
     EjerciciosService.getAll()
-      .then(r => setItems(r.data))
+      .then(r => setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO")))
       .catch(() => {});
   }, []);
 
   const handleGuardar = async () => {
     try {
-      if (actual.idEjercicio) {
-        await EjerciciosService.update(actual.idEjercicio, actual);
-        setItems(items.map(i => (i.idEjercicio === actual.idEjercicio ? actual : i)));
+      if (ejercicioAEditar?.idEjercicio) {
+        await EjerciciosService.update(ejercicioAEditar?.idEjercicio, actual, imagenFile).then((resp) => {
+          showSuccess(resp);
+          setEjercicioAEditar(undefined)
+          EjerciciosService.getAll()
+          .then(r => setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO")))
+          .catch(() => {});
+        });
+        
       } else {
         
         const ejercicioNuevoConImagen = {
@@ -75,7 +85,7 @@ const Ejercicios = () => {
       showError('Error al guardar ejercicio');
     } finally {
       setOpen(false);
-      setActual({ idEjercicio: 0, nombre: '', explicacion: '', urlVideo: '', imagenUrl: '' });
+      setActual({ idEjercicio: 0, nombre: '', explicacion: '', urlVideo: '', imagenUrl: '', estadoEjercicio: ''});
     }
   };
 
@@ -88,9 +98,13 @@ const Ejercicios = () => {
 
   const handleEliminar = async (idEjercicio: number) => {
     try {
-      await EjerciciosService.delete(idEjercicio);
-      setItems(items.filter(i => i.idEjercicio !== idEjercicio));
-      showSuccess('Ejercicio eliminado');
+      await EjerciciosService.delete(idEjercicio).then((resp) => {
+        showSuccess(resp);
+        EjerciciosService.getAll()
+        .then(r => setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO")))
+        .catch(() => {});
+      });
+      
     } catch {
       showError('Error al eliminar ejercicio');
     }
@@ -130,7 +144,7 @@ const Ejercicios = () => {
                   <IconButton color="info" onClick={() => setDetalle(item)}>
                     <VisibilityIcon />
                   </IconButton>
-                  <IconButton color="primary" onClick={() => { setActual(item); setOpen(true); }}>
+                  <IconButton color="primary" onClick={() => {setEjercicioAEditar(item); setOpen(true); }}>
                     <EditIcon />
                   </IconButton>
                   <IconButton color="error" onClick={() => handleEliminar(item.idEjercicio)}>
@@ -144,11 +158,26 @@ const Ejercicios = () => {
       </TableContainer>
 
       <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>{actual.idEjercicio ? 'Editar Ejercicio' : 'Nuevo Ejercicio'}</DialogTitle>
+        <DialogTitle>{ejercicioAEditar?.idEjercicio ? 'Editar Ejercicio' : 'Nuevo Ejercicio'}</DialogTitle>
         <DialogContent>
-          <TextField fullWidth margin="dense" label="Nombre" value={actual.nombre} onChange={e => setActual({ ...actual, nombre: e.target.value })} />
-          <TextField fullWidth margin="dense" label="Explicación" value={actual.explicacion} onChange={e => setActual({ ...actual, explicacion: e.target.value })} />
-          <TextField fullWidth margin="dense" label="URL Video" value={actual.urlVideo} onChange={e => setActual({ ...actual, urlVideo: e.target.value })} />
+          <TextField fullWidth margin="dense" label="Nombre" value={ejercicioAEditar?.nombre} onChange={e => {
+            if (ejercicioAEditar) {
+              setActual({ ...actual, nombre: e.target.value });
+              setEjercicioAEditar({ ...ejercicioAEditar, nombre: e.target.value })}
+            }
+          } />
+          <TextField fullWidth margin="dense" label="Explicación" value={ejercicioAEditar?.explicacion} onChange={e => {
+            if (ejercicioAEditar) {
+              setActual({ ...actual, explicacion: e.target.value });
+              setEjercicioAEditar({ ...ejercicioAEditar, explicacion: e.target.value })
+            }
+          }} />
+          <TextField fullWidth margin="dense" label="URL Video" value={ejercicioAEditar?.urlVideo} onChange={e => {
+            if (ejercicioAEditar) {
+              setActual({ ...actual, urlVideo: e.target.value });
+              setEjercicioAEditar({ ...ejercicioAEditar, urlVideo: e.target.value })
+            }
+          }} />
             <Box mt={2}>
               <input type="file" accept="image/*" onChange={handleImagenChange} />
               {imagenFile && (
@@ -168,9 +197,9 @@ const Ejercicios = () => {
       <Dialog open={Boolean(detalle)} onClose={() => setDetalle(null)}>
         <DialogTitle>{detalle?.nombre}</DialogTitle>
         <DialogContent>
-          <Typography gutterBottom>{detalle?.explicacion}</Typography>
+          <Typography gutterBottom><strong>Detalle: </strong>{detalle?.explicacion}</Typography>
           {detalle?.urlVideo && (
-            <Typography gutterBottom>Video: <a href={detalle.urlVideo} target="_blank" rel="noreferrer">{detalle.urlVideo}</a></Typography>
+            <Typography gutterBottom><strong>Video: </strong> <a href={detalle.urlVideo} target="_blank" rel="noreferrer">{detalle.urlVideo}</a></Typography>
           )}
           {detalle?.imagen && (
             <Box component="img" src={detalle.imagenUrl} alt={detalle.nombre} sx={{ width: '100%', mt: 1 }} />

@@ -33,12 +33,35 @@ class PlatosService {
     }
   }
 
-  update(id: number, data: any) {
-    return axios.put(`${API_URL}/${id}`, data);
+  async update(platoSeleccionado: any, imagen: File | null) {
+    try {
+
+      const plato = {
+        nombre: platoSeleccionado.nombre,
+        descripcion: platoSeleccionado.descripcion,
+        calorias: platoSeleccionado.calorias,
+        ingredientes: platoSeleccionado.ingredientes,
+      }
+      const formData = new FormData();
+      formData.append("platoSugeridoRequestDTO", JSON.stringify(plato));
+      if(imagen){
+        formData.append("imagen", imagen);
+      }
+
+      const response = await axios.put(`/api/platoSugerido/${platoSeleccionado.idPlatoSugerido}`, formData);
+      return response.data
+    } catch (error) {
+      throw error;
+    }
   }
 
-  delete(id: number) {
-    return axios.delete(`${API_URL}/${id}`);
+  async delete(id: number) {
+    try {
+      const response = await axios.delete(`/api/platoSugerido/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 }
 

@@ -4,8 +4,15 @@ const API_URL = "/api/ejercicios";
 
 class EjerciciosService {
   
-  getAll() {
-    return axios.get(API_URL);
+  async getAll() {
+    try {
+
+      const response = await axios.get(API_URL);
+      return response.data;
+
+    } catch (error) {
+      throw error;
+    }
   }
 
   getById(id: number) {
@@ -35,12 +42,33 @@ class EjerciciosService {
     }
   }
 
-  update(id: number, data: any) {
-    return axios.put(`${API_URL}/${id}`, data);
+  async update(idEjercicio: number, data: any, imagen: File | undefined) {
+    try {
+      const ejercicioParaForm = {
+        nombre: data.nombre,
+        explicacion: data.explicacion,
+        urlVideo: data.urlVideo,
+        imagenUrl: data.imagenUrl,
+      }
+      const formData = new FormData();
+      formData.append("ejercicioRequestDTO", JSON.stringify(ejercicioParaForm));
+      if(imagen){
+        formData.append("imagen", imagen);
+      }
+      const response = await axios.put(`/api/ejercicio/${idEjercicio}`, formData);
+      return response.data;
+    } catch (error) {
+      throw error
+    }
   }
 
-  delete(id: number) {
-    return axios.delete(`${API_URL}/${id}`);
+  async delete(id: number) {
+    try {
+      const response = await axios.delete(`/api/ejercicio/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 }
 
