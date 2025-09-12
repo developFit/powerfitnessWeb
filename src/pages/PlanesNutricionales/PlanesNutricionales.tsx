@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -15,11 +15,17 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  IconButton
+  IconButton,
+  MenuItem
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+
 import { showError, showSuccess } from "../../utils/alerts";
+import PlanesNutricionalesService from "../../services/PlanesNutricionalesService";
+import PlatosService from "../../services/PlatosService";
 
 interface Plato {
   idPlatoSugerido: number;
@@ -30,41 +36,69 @@ interface Plato {
 }
 
 interface Plan {
-  id: number;
+  idPlanNutrcional: number;
   nombre: string;
   desayuno: string;
   almuerzo: string;
   cena: string;
   colaciones: string[];
-  platos: Plato[];
+  platos: Item[];
   nombreRutina: string;
   tips: string;
 }
 
-const emptyPlato: Plato = {
-  idPlatoSugerido: 0,
-  nombre: "",
-  descripcion: "",
-  calorias: 0,
-  ingredientes: ""
-};
 
 const emptyPlan: Plan = {
-  id: 0,
+  idPlanNutrcional: 0,
   nombre: "",
   desayuno: "",
   almuerzo: "",
   cena: "",
   colaciones: [""],
-  platos: [{ ...emptyPlato }],
+  platos: [],
   nombreRutina: "",
   tips: ""
 };
+
+interface PlanDisponible {
+  idPlan?: number;           // Para rutinas disponibles
+  idPlanNutrcional?: number; // Para el plan asignado (con typo de la API)
+  nombre: string;
+}
+
+interface Item {
+  idPlatoSugerido: number;
+  nombre: string;
+  descripcion: string;
+  calorias: string;
+  urlImagen?: string;
+  ingredientes: string
+}
+
+interface ItemNuevo {
+  nombre: string;
+  descripcion: string;
+  calorias: string;
+  ingredientes: string,
+}
 
 const PlanesNutricionales = () => {
   const [items, setItems] = useState<Plan[]>([]);
   const [open, setOpen] = useState(false);
   const [nuevo, setNuevo] = useState<Plan>(emptyPlan);
+  const [platos, setPlatos] = useState<Item[]>([]);
+  const [platosExistentes, setPlatosExistentes] = useState<Item[]>([]);
+  const [detalle, setDetalle] = useState<Plan | null>(null);
+
+  useEffect(() => {
+    PlatosService.getAll().then((resp) =>{
+      setPlatosExistentes(resp);
+    });
+
+    PlanesNutricionalesService.getAll().then((resp) => {
+      setItems(resp);
+    })
+  },[])
 
   const handleOpen = () => {
     setNuevo(emptyPlan);
@@ -75,47 +109,76 @@ const PlanesNutricionales = () => {
     setNuevo((prev) => ({ ...prev, colaciones: [...prev.colaciones, ""] }));
   };
 
-  const handleAddPlato = () => {
-    setNuevo((prev) => ({
-      ...prev,
-      platos: [...prev.platos, { ...emptyPlato, idPlatoSugerido: prev.platos.length + 1 }]
-    }));
-  };
-
   const handleGuardar = () => {
     try {
-      const nuevoPlan = { ...nuevo, id: items.length + 1 };
-      setItems([...items, nuevoPlan]);
-      setOpen(false);
-      showSuccess("Plan guardado correctamente");
+      
+      const nuevoPlan = { ...nuevo, id: items.length + 1 , platos: platos};
+      PlanesNutricionalesService.create(nuevoPlan).then((resp) => {
+        setItems([...items, nuevoPlan]);
+        setOpen(false);
+        showSuccess(resp);
+      })
+      
+      console.log(platos)
+      
     } catch (error) {
       showError("Error al guardar plan");
     }
   };
+
+  const handleVerDetalle = (item: Plan) => {
+    setDetalle(item);
+  };
+
+  const handleSeleccionarPlatoExistente = (platoExistenteSeleccionado: string) => {
+    try{
+      const platoSelect = JSON.parse(platoExistenteSeleccionado)
+      const resultado = platos.find((p) => p.idPlatoSugerido == Number(platoSelect.idPlatoSugerido) || p.nombre == platoSelect.nombre)
+      if(!resultado){
+
+        const platoEncontrado = platosExistentes.find(p => p.idPlatoSugerido == Number(platoSelect.idPlatoSugerido));
+
+        if(platoEncontrado){
+          setPlatos([...platos, platoEncontrado]);
+        }
+      }else{
+        showError("Ya hay un plato con ese nombre en la lista")
+      }
+    }
+    catch (error) {
+      showError("Algo salio mal")
+    }
+  }
 
   return (
     <Box>
       <Typography variant="h5" gutterBottom>
         Gestión de Planes Nutricionales
       </Typography>
-      <Button variant="contained" color="warning" onClick={handleOpen}>
-        Nuevo Plan Nutricional
-      </Button>
+      <div style={{display: "flex", justifyContent: "end"}}>
+        <Button variant="contained" color="warning" onClick={handleOpen}>
+          <AddIcon></AddIcon> Nuevo Plan Nutricional
+        </Button>
+      </div>
       <TableContainer component={Paper} sx={{ mt: 2 }}>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>ID</TableCell>
               <TableCell>Nombre</TableCell>
-              <TableCell>Rutina</TableCell>
+              <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {items.map((plan) => (
-              <TableRow key={plan.id}>
-                <TableCell>{plan.id}</TableCell>
-                <TableCell>{plan.nombre}</TableCell>
+              <TableRow key={plan.idPlanNutrcional}>
+                <TableCell>{plan.idPlanNutrcional}</TableCell>
                 <TableCell>{plan.nombreRutina}</TableCell>
+                <TableCell>
+                  <IconButton color="info" onClick={() => handleVerDetalle(plan)}>
+                    <VisibilityIcon/>
+                  </IconButton>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -133,17 +196,11 @@ const PlanesNutricionales = () => {
       >
         <DialogTitle>Nuevo Plan Nutricional</DialogTitle>
         <DialogContent>
+
           <TextField
             fullWidth
             margin="dense"
             label="Nombre"
-            value={nuevo.nombre}
-            onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })}
-          />
-          <TextField
-            fullWidth
-            margin="dense"
-            label="Nombre de Rutina"
             value={nuevo.nombreRutina}
             onChange={(e) => setNuevo({ ...nuevo, nombreRutina: e.target.value })}
           />
@@ -201,86 +258,70 @@ const PlanesNutricionales = () => {
           <Button startIcon={<AddIcon />} onClick={handleAddColacion} sx={{ mt: 1 }}>
             Agregar Colación
           </Button>
+          
           <Typography sx={{ mt: 2 }}>Platos</Typography>
-          {nuevo.platos.map((p, idx) => (
-            <Box key={idx} sx={{ border: "1px solid #ccc", p: 1, mt: 1 }}>
+        
+          
               <TextField
+                select
+                label="Platos sugeridos"
                 fullWidth
-                label="Nombre"
                 margin="dense"
-                value={p.nombre}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setNuevo((prev) => {
-                    const copy = { ...prev };
-                    copy.platos = [...prev.platos];
-                    copy.platos[idx] = { ...copy.platos[idx], nombre: val };
-                    return copy;
-                  });
-                }}
-              />
-              <TextField
-                fullWidth
-                label="Descripción"
-                margin="dense"
-                value={p.descripcion}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setNuevo((prev) => {
-                    const copy = { ...prev };
-                    copy.platos = [...prev.platos];
-                    copy.platos[idx] = { ...copy.platos[idx], descripcion: val };
-                    return copy;
-                  });
-                }}
-              />
-              <TextField
-                fullWidth
-                label="Calorías"
-                margin="dense"
-                type="number"
-                value={p.calorias}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  setNuevo((prev) => {
-                    const copy = { ...prev };
-                    copy.platos = [...prev.platos];
-                    copy.platos[idx] = { ...copy.platos[idx], calorias: val };
-                    return copy;
-                  });
-                }}
-              />
-              <TextField
-                fullWidth
-                label="Ingredientes"
-                margin="dense"
-                value={p.ingredientes}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setNuevo((prev) => {
-                    const copy = { ...prev };
-                    copy.platos = [...prev.platos];
-                    copy.platos[idx] = { ...copy.platos[idx], ingredientes: val };
-                    return copy;
-                  });
-                }}
-              />
-              <IconButton
-                aria-label="delete"
-                onClick={() =>
-                  setNuevo((prev) => ({
-                    ...prev,
-                    platos: prev.platos.filter((_, i) => i !== idx)
-                  }))
+                SelectProps={{ multiple: false }}
+                value={platosExistentes}
+                onChange={(e) =>
+                  {
+                    if (e.target.value) {
+                      handleSeleccionarPlatoExistente(e.target.value)
+                    };
+                  }
                 }
               >
-                <DeleteIcon />
-              </IconButton>
-            </Box>
-          ))}
-          <Button startIcon={<AddIcon />} onClick={handleAddPlato} sx={{ mt: 1 }}>
-            Agregar Plato
-          </Button>
+                <MenuItem>
+                  <em>Seleccione los platos que quiere agregar</em>
+                </MenuItem>
+                {platosExistentes
+                    .filter(p => p && p.idPlatoSugerido !== undefined && p.idPlatoSugerido !== null && p.nombre)
+                    .map(p => (
+                      <MenuItem key={p.idPlatoSugerido} value={JSON.stringify(p)} style={{display: "flex", justifyContent: "space-between"}}>
+                        {p.nombre} <img src={p.urlImagen} alt="" width={100} height={100}/>
+                      </MenuItem>
+                    ))
+                  }
+              </TextField>
+          <div  style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                borderRadius: "8px",
+                backgroundColor: "#f5f5f5"
+              }}>
+            {platos
+            .map(p => (
+              <Button key={p.idPlatoSugerido}
+              sx={{
+                display:"flex",
+                alignItems: "center",
+                padding: "10px",
+                borderRadius: "10px",
+                fontWeight: "bold",
+                "&:hover": {
+                  backgroundColor: "#ed6c02",
+                  cursor: "pointer",
+                  color: "white"
+                }
+              }}
+              onClick={(e) => {
+                setPlatos(platos.filter((plato) => plato.idPlatoSugerido != p.idPlatoSugerido))
+              }}>
+                <CloseIcon></CloseIcon>
+                {p.nombre}
+                <img src={p.urlImagen}  alt="Imagen del plato" width="100" height="100" style={{ objectFit: "contain", borderRadius: "10px", }} />
+              </Button>
+              
+            ))
+          }
+          </div>
           <TextField
             fullWidth
             margin="dense"
@@ -296,6 +337,43 @@ const PlanesNutricionales = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog
+              open={!!detalle}
+              onClose={(e, r) => {
+                if (r === 'backdropClick' || r === 'escapeKeyDown') return;
+                setDetalle(null);
+              }}
+              maxWidth="sm"
+              fullWidth
+            >
+              <DialogTitle style={{backgroundColor: "#ed6c02", color: "white"}}>
+                Detalle de {detalle?.nombreRutina}
+              </DialogTitle>
+              <DialogContent dividers>
+                {detalle && (
+                  <Box>
+                    <Typography><strong>Nombre:</strong> {detalle.nombreRutina}</Typography>
+                    <Typography><strong>Platos:</strong> {detalle?.platos?.length || 0}</Typography>
+                    {detalle?.platos?.map((d, i) => (
+                      <div style={{display: "flex", justifyContent: "space-between", alignContent: "center"}}>
+                        <Box key={i} sx={{ mt: 2 }}>
+                          <Typography variant="subtitle1"><strong>{d.nombre}</strong></Typography>
+                          <Typography variant="subtitle2" style={{textDecoration: "underline"}}>Ingredientes:</Typography>
+                          <ul>
+                            <li>{d.ingredientes}</li>
+                          </ul>
+                        </Box>
+                        <img src={d.urlImagen} alt="" width={100} height={100}/>
+                      </div>
+                    ))}
+                  </Box>
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setDetalle(null)}>Cerrar</Button>
+              </DialogActions>
+            </Dialog>
     </Box>
   );
 };

@@ -3,24 +3,65 @@ import axios from "./api";
 const API_URL = "/api/platos";
 
 class PlatosService {
-  getAll() {
-    return axios.get(API_URL);
+  async getAll() {
+    try {
+      const response = await axios.get("/api/platosSugeridos");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 
   getById(id: number) {
     return axios.get(`${API_URL}/${id}`);
   }
 
-  create(data: any) {
-    return axios.post(API_URL, data);
+  async create(data: any) {
+    try {
+      const formData = new FormData()
+      formData.append("nombre", data.nombre);
+      formData.append("descripcion", data.descripcion);
+      formData.append("imagen", data.imagen);
+      formData.append("calorias", data.calorias);
+      formData.append("ingredientes", data.ingredientes);
+
+      console.log(formData)
+      const response = await axios.post("/api/platoSugerido",formData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 
-  update(id: number, data: any) {
-    return axios.put(`${API_URL}/${id}`, data);
+  async update(platoSeleccionado: any, imagen: File | null) {
+    try {
+
+      const plato = {
+        nombre: platoSeleccionado.nombre,
+        descripcion: platoSeleccionado.descripcion,
+        calorias: platoSeleccionado.calorias,
+        ingredientes: platoSeleccionado.ingredientes,
+      }
+      const formData = new FormData();
+      formData.append("platoSugeridoRequestDTO", JSON.stringify(plato));
+      if(imagen){
+        formData.append("imagen", imagen);
+      }
+
+      const response = await axios.put(`/api/platoSugerido/${platoSeleccionado.idPlatoSugerido}`, formData);
+      return response.data
+    } catch (error) {
+      throw error;
+    }
   }
 
-  delete(id: number) {
-    return axios.delete(`${API_URL}/${id}`);
+  async delete(id: number) {
+    try {
+      const response = await axios.delete(`/api/platoSugerido/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 }
 

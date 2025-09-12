@@ -53,9 +53,9 @@ const SidebarResponsive = () => {
           <ListItemIcon><PeopleIcon sx={{ color: "#FFA726" }} /></ListItemIcon>
           <ListItemText primary="Alumnos" primaryTypographyProps={{ sx: { color: "#ffff" } }} />
         </ListItem>
-        <ListItem button component={Link} to="/ConfiguracionAlumnos">
+        <ListItem button component={Link} to="/validarRutinas">
           <ListItemIcon><AddTask sx={{ color: "#FFA726" }} /></ListItemIcon>
-          <ListItemText primary="ValidarRutinas" primaryTypographyProps={{ sx: { color: "#ffff" } }} />
+          <ListItemText primary="Validar rutinas" primaryTypographyProps={{ sx: { color: "#ffff" } }} />
         </ListItem>
         <ListItem button component={Link} to="/rutinas">
           <ListItemIcon><FitnessCenterIcon sx={{ color: "#FFA726" }} /></ListItemIcon>

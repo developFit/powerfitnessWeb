@@ -3,16 +3,27 @@ import axios from "./api";
 const API_URL = "/api/planes";
 
 class PlanesNutricionalesService {
-  getAll() {
-    return axios.get(API_URL);
+  async getAll() {
+    try{
+      const response = await axios.get("/api/planesNutricionales");
+      return response.data
+    }
+    catch (error){
+      throw error;
+    }
   }
 
   getById(id: number) {
     return axios.get(`${API_URL}/${id}`);
   }
 
-  create(data: any) {
-    return axios.post(API_URL, data);
+  async create(data: any) {
+    try {
+      const response = await axios.post("/api/planNutricional", data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 
   update(id: number, data: any) {
