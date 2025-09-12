@@ -44,17 +44,18 @@ interface EjercicioItem {
 }
 
 interface EjercicioRutina {
-  idEjercicio: number | string;
+  idEjercicioDeRutina: number | string;
   grupoMuscular: string;
-  series: number;
-  repeticiones: number;
+  rondas: number | undefined;
+  repeticiones: number | undefined;
   carga: string;
   observaciones: string;
+  ejercicio: EjercicioItem
 }
 
 interface DiaRutina {
   dia: string;
-  ejercicios: EjercicioRutina[];
+  ejerciciosDeRutinaResponseDTO: EjercicioRutina[];
 }
 
 interface Rutina {
@@ -65,7 +66,7 @@ interface Rutina {
   diasPorSemana: string;
   tiempo: string;
   alumno: Alumno;
-  dias: DiaRutina[];
+  jornadasResponseDTO: DiaRutina[];
   estadoRutina: string;
 }
 
@@ -99,7 +100,7 @@ const emptyRutina: Rutina = {
   nombre: '',
   objetivo: '',
   diasPorSemana: '1',
-  dias: [{ dia: 'Lunes', ejercicios: [] }],
+  jornadasResponseDTO: [{ dia: 'Lunes', ejerciciosDeRutinaResponseDTO: [] }],
   nivelRutina: "",
   tiempo: "",
   alumno: emptyAlumno,
@@ -108,42 +109,51 @@ const emptyRutina: Rutina = {
 
 const Rutinas = () => {
   const [items, setItems] = useState<Rutina[]>([]);
+  const [itemsFiltrados, setItemsFiltrados] = useState<Rutina[]>([]);
   const [open, setOpen] = useState(false);
   const [detalle, setDetalle] = useState<Rutina | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [alumnos, setAlumnos] = useState<Alumno[]>([]);
-  const [ejercicios, setEjercicios] = useState<EjercicioItem[]>([]);
+  const [ejercicios, setEjercicios] = useState<any[]>([]);
   const [rutina, setRutina] = useState<Rutina>(emptyRutina);
+  const [alumnoSeleccionado, setAlumnoSeleccionado] = useState<Alumno>();
+  const [rutinasParaExportar, setRutinasParaExportar] = useState<Rutina[]>([])
+  const [esExport, setEsExport] = useState<boolean>(false);
+  const [esSeleccionMultiple, setEsSeleccionMultiple] = useState<boolean>(false);
 
   useEffect(() => {
     AlumnosService.getAll().then(r => setAlumnos(r.data));
     EjerciciosService.getAll().then(r => setEjercicios(r.data));
     RutinasService.getAll()
-      .then(r => setItems(r.data))
+      .then(r => {
+        setItems(r)
+        setItemsFiltrados(r.filter( (i: Rutina)=> i.estadoRutina == "ACTIVO"))
+      })
       .catch(() => {});
   }, []);
 
   const handleAgregarDia = () => {
     setRutina(prev => ({
       ...prev,
-      dias: [...prev.dias, { dia: 'Lunes', ejercicios: [] }],
+      jornadasResponseDTO: [...prev.jornadasResponseDTO, { dia: 'Lunes', ejerciciosDeRutinaResponseDTO: [] }],
     }));
   };
 
   const handleAgregarEjercicio = (i: number) => {
     setRutina(prev => {
       const copy = { ...prev };
-      copy.dias = [...prev.dias];
-      copy.dias[i] = { ...copy.dias[i] };
-      copy.dias[i].ejercicios = [
-        ...copy.dias[i].ejercicios,
+      copy.jornadasResponseDTO = [...prev.jornadasResponseDTO];
+      copy.jornadasResponseDTO[i] = { ...copy.jornadasResponseDTO[i] };
+      copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO = [
+        ...copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO,
         {
-          idEjercicio: 0,
+          idEjercicioDeRutina: 0,
           grupoMuscular: gruposMusculares[0],
-          series: 0,
-          repeticiones: 0,
+          rondas: undefined,
+          repeticiones: undefined,
           carga: '',
           observaciones: '',
+          ejercicio: ejercicios[0]
         },
       ];
       return copy;
@@ -153,22 +163,23 @@ const Rutinas = () => {
   const handleEditar = (index: number) => {
     setEditingIndex(index);
     const current = items[index];
-    setRutina({
-      ...emptyRutina,
-      ...current,
-      dias: Array.isArray((current as any).dias) ? (current as any).dias : emptyRutina.dias
-    });
+    setRutina(current);
     setOpen(true);
   };
 
-  const handleEliminar = async (index: number) => {
+  const handleEliminar = async (rutinaAEliminar: any) => {
     try {
-      const current = items[index] as any;
-      if (current && current.id) {
-        await RutinasService.delete(current.id);
+      if (rutinaAEliminar && rutinaAEliminar.idRutina) {
+        await RutinasService.delete(rutinaAEliminar.idRutina).then(() => {
+          showSuccess('Rutina eliminada');
+          RutinasService.getAll()
+          .then(r =>{
+            setItems(r)
+            setItemsFiltrados(r.filter( (i: Rutina)=> i.alumno.idAlumno == alumnoSeleccionado?.idAlumno))
+          } )
+          .catch(() => {});
+        });
       }
-      setItems(items.filter((_, i) => i !== index));
-      showSuccess('Rutina eliminada');
     } catch {
       showError('Error al eliminar rutina');
     }
@@ -179,12 +190,14 @@ const Rutinas = () => {
   };
 
   const handleExport = () => {
-    const header = ['Alumno', 'Nombre', 'Objetivo', 'DiasPorSemana'];
-    const rows = items.map(r => [
+    setEsExport(false);
+    const header = ['Alumno', 'Nombre', 'Objetivo', 'DiasPorSemana', "Estado de la rutina"];
+    const rows = itemsFiltrados.map(r => [
       alumnos.find(a => a.idAlumno === r?.alumno?.idAlumno)?.nombre || r.idRutina,
       r.nombre,
       r.objetivo,
-      r.diasPorSemana
+      r.diasPorSemana,
+      r.estadoRutina
     ]);
     let csv = header.join(',') + '\n';
     csv += rows.map(row => row.join(',')).join('\n');
@@ -198,32 +211,61 @@ const Rutinas = () => {
     document.body.removeChild(link);
   };
 
+  const handleCrearRutina = () => {
+    setOpen(true);
+    if(alumnoSeleccionado){
+      setRutina({...emptyRutina, alumno: alumnoSeleccionado})
+    }
+    else{
+      setRutina(emptyRutina)
+    }
+  }
+
   const handleGuardar = async () => {
-    const payload: Rutina = {
-      ...rutina,
-      idRutina: Number(rutina.idRutina),
-      dias: (rutina.dias || []).map(d => ({
-        ...d,
-        ejercicios: (d.ejercicios || []).map(e => ({
-          ...e,
-          idEjercicio: toNumberOrZero(e.idEjercicio)
-        }))
-      }))
-    };
+
+    const payload = {
+      idAlumno: rutina.alumno.idAlumno,
+      nombre: rutina.nombre,
+      objetivo: rutina.objetivo,
+      diasPorSemana: rutina.diasPorSemana,
+      dias: rutina.jornadasResponseDTO.map((j: any) =>{
+        return {
+          idJornada: j.idJornada,
+          dia: j.dia,
+          ejercicios: j.ejerciciosDeRutinaResponseDTO.map((ej: any) => {
+            return {
+              idEjercicio: ej.ejercicio.idEjercicio,
+              grupoMuscular: ej.grupoMuscular,
+              series: ej.rondas,
+              repeticiones: ej.repeticiones,
+              carga: ej.carga,
+              observaciones: ej.observaciones
+            }
+          })
+        }
+      })
+    }
 
     try {
       if (editingIndex !== null) {
+        
         const current = items[editingIndex] as any;
-        if (current && current.id) {
-          await RutinasService.update(current.id, payload);
+        
+        if (current && current.idRutina) {
+          console.log(payload)
+          await RutinasService.update(current.idRutina, payload);
         }
         const updated = current && current.id ? { ...payload, id: current.id } : payload;
-        setItems(items.map((it, idx) => idx === editingIndex ? updated : it));
         showSuccess('Rutina actualizada');
       } else {
         const response = await RutinasService.create(payload);
         const nuevo = response.data || payload;
-        setItems([...items, nuevo]);
+        RutinasService.getAll()
+          .then(r =>{
+            setItems(r)
+            setItemsFiltrados(r.filter( (i: Rutina)=> i.alumno.idAlumno == alumnoSeleccionado?.idAlumno))
+          } )
+          .catch(() => {});
         showSuccess('Rutina guardada correctamente');
       }
     } catch (error) {
@@ -235,34 +277,103 @@ const Rutinas = () => {
     }
   };
 
+  const handleExportSeleccionMultiple = () => {
+    setEsExport(false);
+    const header = ['Alumno', 'Nombre', 'Objetivo', 'DiasPorSemana', "Estado de la rutina"];
+    const rows = rutinasParaExportar.map(r => [
+      alumnos.find(a => a.idAlumno === r?.alumno?.idAlumno)?.nombre || r.idRutina,
+      r.nombre,
+      r.objetivo,
+      r.diasPorSemana,
+      r.estadoRutina
+    ]);
+    let csv = header.join(',') + '\n';
+    csv += rows.map(row => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'rutinas.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  const handlerCargarRutinasDeAlumno = (value: string) => {
+    const alumnoEncontrado = alumnos.find(a => a.idAlumno.toString() == value);
+    setAlumnoSeleccionado(alumnoEncontrado);
+    setItemsFiltrados(items.filter(i => i.alumno.idAlumno.toString() == value && i.estadoRutina == "ACTIVO"))
+  }
+
+  const ajustarParaSeleccionarVarios = () => {
+    setEsExport(false);
+    setEsSeleccionMultiple(true);
+  }
+
   return (
     <Box>
       <Typography variant="h5">Rutinas</Typography>
-      <Box display="flex" gap={1} justifyContent={"end"}>
-        <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExport}>
-          Exportar
-        </Button>
-        <Button variant="contained" onClick={() => setOpen(true)}>
-          <AddIcon></AddIcon>Crear Rutina
-        </Button>
+      <Box display="flex" gap={1} justifyContent={"space-between"}>
+        
+            <Select
+            displayEmpty
+            style={{width: "100%",  backgroundColor: "white", color: "black"}}
+              value={alumnoSeleccionado?.idAlumno.toString() ?? ""}
+              onChange={async (e) => {
+                handlerCargarRutinasDeAlumno(e.target.value);
+              }}
+              label="Alumno"
+              renderValue={(selected) => {
+              if (selected === "") {
+                return <em>--Seleccione un alumno--</em>;
+              }
+              const alumno = alumnos.find(a => a.idAlumno === Number(selected));
+              return alumno?.nombre || "";
+            }}
+            >
+              <MenuItem value="">
+                <em>Seleccione un alumno</em>
+              </MenuItem>
+              {alumnos.map(a => (
+                <MenuItem key={a.idAlumno} value={a.idAlumno.toString()}>{a.nombre}</MenuItem>
+              ))}
+            </Select>
+     
+        <div style={{display: "flex", justifyContent: "space-between", gap: "10px"}}>
+          <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={() => {
+            if(esSeleccionMultiple){
+              handleExportSeleccionMultiple();
+            }
+            else{
+              setEsExport(true)
+            }
+          }}>
+            {esSeleccionMultiple ? "Confirmar exportar" : "Exportar"}
+          </Button>
+          <Button variant="contained" onClick={handleCrearRutina}>
+            <AddIcon></AddIcon>Crear Rutina
+          </Button>
+        </div>
       </Box>
 
       <TableContainer component={Paper} sx={{ mt: 2 }}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Nombre</TableCell>
+              <TableCell>Alumno</TableCell>
               <TableCell>Objetivo</TableCell>
-              <TableCell>Días/Semana</TableCell>
+              <TableCell>Rutina actual</TableCell>
               <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {items.map((r, idx) => (
+            {itemsFiltrados.map((r, idx) => (
               <TableRow key={idx}>
-                <TableCell>{r.nombre}</TableCell>
+                <TableCell>{r.alumno.nombre}</TableCell>
                 <TableCell>{r.objetivo}</TableCell>
-                <TableCell>{r.diasPorSemana}</TableCell>
+                <TableCell>{r.jornadasResponseDTO.map(j => {
+                  return <p>{j.dia + "-" + j.ejerciciosDeRutinaResponseDTO.map((e) => {return e.grupoMuscular})}</p>
+                })}</TableCell>
                 <TableCell>
                   <IconButton color="info" onClick={() => handleVerDetalle(r)}>
                     <VisibilityIcon />
@@ -270,9 +381,16 @@ const Rutinas = () => {
                   <IconButton color="primary" onClick={() => handleEditar(idx)}>
                     <EditIcon />
                   </IconButton>
-                  <IconButton color="error" onClick={() => handleEliminar(idx)}>
+                  <IconButton color="error" onClick={() => handleEliminar(r)}>
                     <DeleteIcon />
                   </IconButton>
+                  {esSeleccionMultiple && (
+                    <input type="checkbox" onChange={(e) => {
+                      if(e.target.checked){
+                        setRutinasParaExportar([...rutinasParaExportar, r])
+                      }
+                    }}/>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
@@ -296,20 +414,31 @@ const Rutinas = () => {
           <FormControl fullWidth margin="dense">
             <InputLabel>Alumno</InputLabel>
             <Select
-              value={""}
-              onChange={e => {
-                const val = JSON.parse(e.target.value);
-                setRutina({ ...rutina, alumno: val});
+              displayEmpty
+              style={{width: "100%",  backgroundColor: "white", color: "black"}}
+                value={rutina.alumno.idAlumno ?? 0}
+                onChange={async (e) => {
+                  const alumno = alumnos.find(a => a.idAlumno.toString() == e.target.value);
+                    if(alumno){
+                      setRutina({...rutina, alumno: alumno});
+                    }
+                }}
+                label="Alumno"
+                renderValue={(selected) => {
+                if (selected === 0) {
+                  return <em>--Seleccione un alumno--</em>;
+                }
+                const alumno = alumnos.find(a => a.idAlumno === Number(selected));
+                return alumno?.nombre || 0;
               }}
-              label="Alumno"
-            >
-              <MenuItem value="">
-                <em>Seleccione un alumno</em>
-              </MenuItem>
-              {alumnos.map(a => (
-                <MenuItem key={a.idAlumno} value={JSON.stringify(a)}>{a.nombre}</MenuItem>
-              ))}
-            </Select>
+              >
+                <MenuItem value="">
+                  <em>Seleccione un alumno</em>
+                </MenuItem>
+                {alumnos.map(a => (
+                  <MenuItem key={a.idAlumno} value={a.idAlumno.toString()}>{a.nombre}</MenuItem>
+                ))}
+              </Select>
           </FormControl>
           <TextField
             fullWidth
@@ -337,7 +466,7 @@ const Rutinas = () => {
               Agregar Día
             </Button>
           </div>
-          {rutina.dias?.map((d, i) => (
+          {rutina.jornadasResponseDTO?.map((d, i) => (
             <Box key={i} sx={{ border: '1px solid #ccc', mt: 2, p: 2 }}>
               <FormControl fullWidth margin="dense">
                 <InputLabel>Día</InputLabel>
@@ -347,8 +476,8 @@ const Rutinas = () => {
                     const val = String(e.target.value);
                     setRutina(prev => {
                       const copy = { ...prev };
-                      copy.dias = [...prev.dias];
-                      copy.dias[i] = { ...copy.dias[i], dia: val };
+                      copy.jornadasResponseDTO = [...prev.jornadasResponseDTO];
+                      copy.jornadasResponseDTO[i] = { ...copy.jornadasResponseDTO[i], dia: val };
                       return copy;
                     });
                   }}
@@ -360,7 +489,7 @@ const Rutinas = () => {
                 </Select>
               </FormControl>
 
-              {d.ejercicios.map((ej, j) => (
+              {d.ejerciciosDeRutinaResponseDTO.map((ej, j) => (
                 <Box key={j} sx={{ pl: 2, mt: 1 }}>
                   <FormControl fullWidth margin="dense">
                     <InputLabel>Grupo Muscular</InputLabel>
@@ -368,13 +497,11 @@ const Rutinas = () => {
                       value={ej.grupoMuscular}
                       onChange={e => {
                         const val = String(e.target.value);
+                        
                         setRutina(prev => {
                           const copy = { ...prev };
-                          copy.dias = [...prev.dias];
-                          copy.dias[i] = { ...copy.dias[i] };
-                          copy.dias[i].ejercicios = [...copy.dias[i].ejercicios];
-                          copy.dias[i].ejercicios[j] = {
-                            ...copy.dias[i].ejercicios[j],
+                          copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO[j] = {
+                            ...copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO[j],
                             grupoMuscular: val,
                           };
                           return copy;
@@ -390,20 +517,18 @@ const Rutinas = () => {
                   <FormControl fullWidth margin="dense">
                     <InputLabel>Ejercicio</InputLabel>
                     <Select
-                      value={ej.idEjercicio === 0 ? '' : ej.idEjercicio}
+                      value={ej?.ejercicio?.idEjercicio}
                       onChange={e => {
-                        const val = e.target.value;
-                        console.log('Ejercicio seleccionado:', val);
+                        
                         setRutina(prev => {
                           const copy = { ...prev };
-                          copy.dias = [...prev.dias];
-                          copy.dias[i] = { ...copy.dias[i] };
-                          copy.dias[i].ejercicios = [...copy.dias[i].ejercicios];
-                          const parsed = Number(val);
-                          console.log('Parsed ID:', parsed);
-                          copy.dias[i].ejercicios[j] = {
-                            ...copy.dias[i].ejercicios[j],
-                            idEjercicio: Number.isNaN(parsed) ? val : parsed
+                          copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO[j] = {
+                            ...copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO[j],
+                            ejercicio: {
+                              idEjercicio: Number(e.target.value),
+                              id: "",
+                              nombre: ""
+                            }
                           };
                           return copy;
                         });
@@ -422,17 +547,17 @@ const Rutinas = () => {
                     fullWidth
                     label="Series"
                     margin="dense"
-                    value={ej.series}
+                    value={ej.rondas}
                     onChange={e => {
                       const val = Number(e.target.value);
                       setRutina(prev => {
                         const copy = { ...prev };
-                        copy.dias = [...prev.dias];
-                        copy.dias[i] = { ...copy.dias[i] };
-                        copy.dias[i].ejercicios = [...copy.dias[i].ejercicios];
-                        copy.dias[i].ejercicios[j] = {
-                          ...copy.dias[i].ejercicios[j],
-                          series: val,
+                        copy.jornadasResponseDTO = [...prev.jornadasResponseDTO];
+                        copy.jornadasResponseDTO[i] = { ...copy.jornadasResponseDTO[i] };
+                        copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO = [...copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO];
+                        copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO[j] = {
+                          ...copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO[j],
+                          rondas: val,
                         };
                         return copy;
                       });
@@ -447,11 +572,8 @@ const Rutinas = () => {
                       const val = Number(e.target.value);
                       setRutina(prev => {
                         const copy = { ...prev };
-                        copy.dias = [...prev.dias];
-                        copy.dias[i] = { ...copy.dias[i] };
-                        copy.dias[i].ejercicios = [...copy.dias[i].ejercicios];
-                        copy.dias[i].ejercicios[j] = {
-                          ...copy.dias[i].ejercicios[j],
+                        copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO[j] = {
+                          ...copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO[j],
                           repeticiones: val,
                         };
                         return copy;
@@ -467,11 +589,8 @@ const Rutinas = () => {
                       const val = e.target.value;
                       setRutina(prev => {
                         const copy = { ...prev };
-                        copy.dias = [...prev.dias];
-                        copy.dias[i] = { ...copy.dias[i] };
-                        copy.dias[i].ejercicios = [...copy.dias[i].ejercicios];
-                        copy.dias[i].ejercicios[j] = {
-                          ...copy.dias[i].ejercicios[j],
+                        copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO[j] = {
+                          ...copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO[j],
                           carga: val,
                         };
                         return copy;
@@ -487,11 +606,8 @@ const Rutinas = () => {
                       const val = e.target.value;
                       setRutina(prev => {
                         const copy = { ...prev };
-                        copy.dias = [...prev.dias];
-                        copy.dias[i] = { ...copy.dias[i] };
-                        copy.dias[i].ejercicios = [...copy.dias[i].ejercicios];
-                        copy.dias[i].ejercicios[j] = {
-                          ...copy.dias[i].ejercicios[j],
+                        copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO[j] = {
+                          ...copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO[j],
                           observaciones: val,
                         };
                         return copy;
@@ -518,7 +634,7 @@ const Rutinas = () => {
           if (r === 'backdropClick' || r === 'escapeKeyDown') return;
           setDetalle(null);
         }}
-        maxWidth="md"
+        maxWidth="sm"
         fullWidth
       >
         <DialogTitle>
@@ -531,13 +647,14 @@ const Rutinas = () => {
               <Typography><strong>Nombre:</strong> {detalle.nombre}</Typography>
               <Typography><strong>Objetivo del alumno:</strong> {detalle.objetivo}</Typography>
               <Typography><strong>Días por semana:</strong> {detalle.diasPorSemana}</Typography>
-              {detalle?.dias?.map((d, i) => (
+              {detalle?.jornadasResponseDTO?.map((d, i) => (
                 <Box key={i} sx={{ mt: 2 }}>
                   <Typography variant="subtitle1">{d.dia}</Typography>
-                  {d.ejercicios?.map((e, j) => (
-                    <Box key={j} sx={{ pl: 2 }}>
-                      <Typography>- Grupo: {e.grupoMuscular}</Typography>
-                      <Typography>- Series: {e.series}</Typography>
+                  {d.ejerciciosDeRutinaResponseDTO?.map((e, j) => (
+                    <Box key={j} sx={{ pl: 0}}>
+                      <Typography><strong>Grupo: {e.grupoMuscular}</strong></Typography>
+                      <Typography>- Ejercicio: {e.ejercicio.nombre}</Typography>
+                      <Typography>- Series: {e.rondas}</Typography>
                       <Typography>- Repeticiones: {e.repeticiones}</Typography>
                       <Typography>- Carga: {e.carga}</Typography>
                       {e.observaciones && (
@@ -554,6 +671,31 @@ const Rutinas = () => {
           <Button onClick={() => setDetalle(null)}>Cerrar</Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog open={esExport}>
+        <DialogTitle>
+          ¿De que manera desea exportar las rutinas?
+        </DialogTitle>
+        <DialogContent>
+          <div style={{display: "flex", justifyContent: "space-between"}}>
+            <Button sx={{
+              "&:hover": {
+                  backgroundColor: "#ed6c02",
+                  cursor: "pointer",
+                  color: "white"
+                }
+            }} onClick={handleExport}>Un solo alumno</Button>
+            <Button sx={{
+              "&:hover": {
+                  backgroundColor: "#ed6c02",
+                  cursor: "pointer",
+                  color: "white"
+                }
+            }} onClick={ajustarParaSeleccionarVarios}>Varios alumnos</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </Box>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -39,7 +39,8 @@ const Platos = () => {
   const [open, setOpen] = useState(false);
   const [nuevo, setNuevo] = useState<Item>({ idPlatoSugerido: 0, nombre: "", descripcion: "", calorias: "", urlImagen: "", ingredientes: "" });
   const [imagenFile, setImagenFile] = useState<File | null>(null);
-
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   useEffect(() => {
     PlatosService.getAll().then((resp) =>{
       setItems(resp)
@@ -169,11 +170,17 @@ const Platos = () => {
           <TextField fullWidth margin="dense" label="Ingredientes" value={nuevo.ingredientes} onChange={(e) => setNuevo({ ...nuevo, ingredientes: e.target.value })} />
           
           <Box mt={2}>
-            <input type="file" accept="image/*" onChange={handleImagenChange} />
+            <input type="file" accept="image/*" onChange={handleImagenChange} ref={fileInputRef}/>
             {imagenFile && (
               <Box mt={1}>
-                <Typography variant="body2">Vista previa:</Typography>
-                <img src={URL.createObjectURL(imagenFile)} alt="Vista previa" width="100" height="100" style={{ objectFit: "cover" }} />
+                <Typography variant="body2">Vista previa: (Para eliminar la foto dale click)</Typography>
+                <img src={URL.createObjectURL(imagenFile)} onClick={() => {
+                   setImagenFile(null);
+                   if(fileInputRef.current){
+                    fileInputRef.current.value = ""
+                   }
+
+                }} alt="Vista previa" width="100" height="100" style={{ objectFit: "cover" }} />
               </Box>
             )}
           </Box>
