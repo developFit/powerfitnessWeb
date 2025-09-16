@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Card,
@@ -27,6 +27,8 @@ import {
   Line,
   Legend,
 } from "recharts";
+import UsuarioService from "../../services/UsuarioService";
+import AuthService from "../../services/AuthService";
 
 const StatCard = ({
   title,
@@ -78,11 +80,22 @@ const dataSocios = [
   { mes: "Jun", nuevos: 20, bajas: 3 },
 ];
 
+
+
 const Home = () => {
+
+  const [datosUsuario, setDatosUsuario] = useState<any>();
+
+  useEffect(() => {
+    UsuarioService.getById(Number(AuthService.getUserId())).then((resp) => {
+      setDatosUsuario(resp);
+    })
+  },[])
+
   return (
     <Box sx={{ flexGrow: 1, backgroundColor: "#000", minHeight: "100vh", p: 2 }}>
       <Typography variant="h4" gutterBottom sx={{ color: "#FFA726" }}>
-        Hola Gabriela
+        Hola {datosUsuario?.nombre}
       </Typography>
 
       <Grid container spacing={2} mb={4}>

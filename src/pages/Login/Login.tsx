@@ -19,9 +19,9 @@ const Login = () => {
 
       // Si el login es exitoso redirigimos al inicio protegido
       navigate('/');
-    } catch (err) {
+    } catch (err: any) {
       // Si algo falla mostramos un mensaje de error
-      const message = err instanceof Error ? err.message : 'Credenciales incorrectas';
+      const message = err ? err.response.data.detail : 'Credenciales incorrectas';
       setError(message);
     }
   };
