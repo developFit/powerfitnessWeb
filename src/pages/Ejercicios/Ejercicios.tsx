@@ -75,6 +75,8 @@ const Ejercicios = () => {
           urlVideo: actual.urlVideo,
           imagen: imagenFile
         }
+
+        console.log(actual)
         
         const response = await EjerciciosService.createWithImage(ejercicioNuevoConImagen);
         const nuevo = response.data || { ...actual, idEjercicio: items.length + 1 };
@@ -109,6 +111,15 @@ const Ejercicios = () => {
       showError('Error al eliminar ejercicio');
     }
   };
+
+  const editarOCrearNombre = (valor: string) => {
+    if (ejercicioAEditar) {
+      setEjercicioAEditar({ ...ejercicioAEditar, nombre: valor })
+    }
+    else{
+      setActual({ ...actual, nombre: valor});
+    }
+  }
 
   return (
     <Box>
@@ -160,22 +171,21 @@ const Ejercicios = () => {
       <Dialog open={open} onClose={() => setOpen(false)}>
         <DialogTitle>{ejercicioAEditar?.idEjercicio ? 'Editar Ejercicio' : 'Nuevo Ejercicio'}</DialogTitle>
         <DialogContent>
-          <TextField fullWidth margin="dense" label="Nombre" value={ejercicioAEditar?.nombre} onChange={e => {
-            if (ejercicioAEditar) {
-              setActual({ ...actual, nombre: e.target.value });
-              setEjercicioAEditar({ ...ejercicioAEditar, nombre: e.target.value })}
-            }
-          } />
+          <TextField fullWidth margin="dense" label="Nombre" value={ejercicioAEditar?.nombre} onChange={(e) => {editarOCrearNombre(e.target.value)}} />
           <TextField fullWidth margin="dense" label="Explicación" value={ejercicioAEditar?.explicacion} onChange={e => {
             if (ejercicioAEditar) {
-              setActual({ ...actual, explicacion: e.target.value });
               setEjercicioAEditar({ ...ejercicioAEditar, explicacion: e.target.value })
+            }
+            else{
+              setActual({ ...actual, explicacion: e.target.value });
             }
           }} />
           <TextField fullWidth margin="dense" label="URL Video" value={ejercicioAEditar?.urlVideo} onChange={e => {
             if (ejercicioAEditar) {
-              setActual({ ...actual, urlVideo: e.target.value });
               setEjercicioAEditar({ ...ejercicioAEditar, urlVideo: e.target.value })
+            }
+            else{
+              setActual({ ...actual, urlVideo: e.target.value });
             }
           }} />
             <Box mt={2}>

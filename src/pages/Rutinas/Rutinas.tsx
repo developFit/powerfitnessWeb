@@ -71,13 +71,13 @@ interface Rutina {
 }
 
 const diasSemana = [
-  "Lunes",
-  "Martes",
-  "Miércoles",
-  "Jueves",
-  "Viernes",
-  "Sábado",
-  "Domingo",
+  "LUNES",
+  "MARTES",
+  "MIERCOLES",
+  "JUEVES",
+  "VIERNES",
+  "SABADO",
+  "DOMINGO",
 ];
 
 const gruposMusculares = [
@@ -100,7 +100,7 @@ const emptyRutina: Rutina = {
   nombre: '',
   objetivo: '',
   diasPorSemana: '1',
-  jornadasResponseDTO: [{ dia: 'Lunes', ejerciciosDeRutinaResponseDTO: [] }],
+  jornadasResponseDTO: [{ dia: 'LUNES', ejerciciosDeRutinaResponseDTO: [] }],
   nivelRutina: "",
   tiempo: "",
   alumno: emptyAlumno,
@@ -123,7 +123,7 @@ const Rutinas = () => {
 
   useEffect(() => {
     AlumnosService.getAll().then(r => setAlumnos(r.data));
-    EjerciciosService.getAll().then(r => setEjercicios(r.data));
+    EjerciciosService.getAll().then(r => setEjercicios(r));
     RutinasService.getAll()
       .then(r => {
         setItems(r)
@@ -135,7 +135,7 @@ const Rutinas = () => {
   const handleAgregarDia = () => {
     setRutina(prev => ({
       ...prev,
-      jornadasResponseDTO: [...prev.jornadasResponseDTO, { dia: 'Lunes', ejerciciosDeRutinaResponseDTO: [] }],
+      jornadasResponseDTO: [...prev.jornadasResponseDTO, { dia: 'LUNES', ejerciciosDeRutinaResponseDTO: [] }],
     }));
   };
 
@@ -546,7 +546,7 @@ const Rutinas = () => {
                       <MenuItem value="">
                         <em>Seleccione un ejercicio</em>
                       </MenuItem>
-                      {ejercicios.map(ex => (
+                      {ejercicios?.map(ex => (
                         <MenuItem key={ex.idEjercicio} value={Number(ex.idEjercicio)}>{ex.nombre}</MenuItem>
                       ))}
                     </Select>
