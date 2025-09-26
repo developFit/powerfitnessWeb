@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Box, Button, Card, CardContent, TextField, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import AuthService from '../../services/AuthService';
-import logo from '../../assets/logo.svg';
+import logo from '../../assets/logo.png';
 
 const Login = () => {
   const [username, setUsername] = useState('');
