@@ -24,6 +24,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import CloseIcon from '@mui/icons-material/Close';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import RutinasService from "../../services/RutinasService";
@@ -41,6 +42,16 @@ interface EjercicioItem {
   idEjercicio: Key | null | undefined;
   id: number | string;
   nombre: string;
+}
+
+interface Ejercicio {
+  idEjercicio: number;
+  nombre: string;
+  explicacion: string;
+  urlVideo: string;
+  imagenUrl?: string;
+  imagen?: File,
+  estadoEjercicio: string;
 }
 
 interface EjercicioRutina {
@@ -123,7 +134,7 @@ const Rutinas = () => {
 
   useEffect(() => {
     AlumnosService.getAll().then(r => setAlumnos(r.data));
-    EjerciciosService.getAll().then(r => setEjercicios(r));
+    EjerciciosService.getAll().then(r => setEjercicios(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO")));
     RutinasService.getAll()
       .then(r => {
         setItems(r)
@@ -137,6 +148,17 @@ const Rutinas = () => {
       ...prev,
       jornadasResponseDTO: [...prev.jornadasResponseDTO, { dia: 'LUNES', ejerciciosDeRutinaResponseDTO: [] }],
     }));
+  };
+
+  const handleEliminarDia = (indiceJornada: number) => {
+
+    setRutina(prev => {
+      const copy = { ...prev };
+      copy.jornadasResponseDTO = [...prev.jornadasResponseDTO];
+      copy.jornadasResponseDTO.splice(indiceJornada, 1)
+      return copy
+    });
+
   };
 
   const handleAgregarEjercicio = (i: number) => {
@@ -160,9 +182,24 @@ const Rutinas = () => {
     });
   };
 
-  const handleEditar = (index: number) => {
+  const handleEliminarEjercicio = (i: number, j: number) => {
+    setRutina(prev => {
+      const copy = { ...prev };
+      console.log(copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO[j])
+      copy.jornadasResponseDTO = [...prev.jornadasResponseDTO];
+      copy.jornadasResponseDTO[i] = { ...copy.jornadasResponseDTO[i] };
+      copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO.splice(j,1)
+      return copy;
+    });
+
+  };
+
+
+  const handleEditar = (index: number, r: any) => {
+    console.log(index)
+    console.log(r)
     setEditingIndex(index);
-    const current = items[index];
+    const current = itemsFiltrados[index];
     setRutina(current);
     setOpen(true);
   };
@@ -383,7 +420,7 @@ const Rutinas = () => {
                   <IconButton color="info" onClick={() => handleVerDetalle(r)}>
                     <VisibilityIcon />
                   </IconButton>
-                  <IconButton color="primary" onClick={() => handleEditar(idx)}>
+                  <IconButton color="primary" onClick={() => handleEditar(idx,r)}>
                     <EditIcon />
                   </IconButton>
                   <IconButton color="error" onClick={() => handleEliminar(r)}>
@@ -476,6 +513,11 @@ const Rutinas = () => {
           </div>
           {rutina.jornadasResponseDTO?.map((d, i) => (
             <Box key={i} sx={{ border: '1px solid #ccc', mt: 2, p: 2 }}>
+              <div style={{textAlign: "end"}}>
+                <Button style={{color: "gray"}} onClick={() => handleEliminarDia(i)}>
+                  <CloseIcon></CloseIcon>
+                </Button>
+              </div>
               <FormControl fullWidth margin="dense">
                 <InputLabel>Día</InputLabel>
                 <Select
@@ -622,6 +664,11 @@ const Rutinas = () => {
                       });
                     }}
                   />
+                  <div style={{textAlign: "end"}}>
+                    <Button size="small" onClick={() => handleEliminarEjercicio(i,j)}>
+                      <DeleteIcon style={{color: "red"}}/>
+                    </Button>
+                  </div>
                 </Box>
               ))}
               <Button size="small" onClick={() => handleAgregarEjercicio(i)} startIcon={<AddIcon />}>

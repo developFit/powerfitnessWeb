@@ -59,12 +59,18 @@ const Ejercicios = () => {
   const handleGuardar = async () => {
     try {
       if (ejercicioAEditar?.idEjercicio) {
-        await EjerciciosService.update(ejercicioAEditar?.idEjercicio, actual, imagenFile).then((resp) => {
+        await EjerciciosService.update(ejercicioAEditar?.idEjercicio, ejercicioAEditar, imagenFile).then((resp) => {
           showSuccess(resp);
           setEjercicioAEditar(undefined)
           EjerciciosService.getAll()
-          .then(r => setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO")))
-          .catch(() => {});
+          .then(r => {
+            EjerciciosService.getAll()
+              .then(r => setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO")))
+              .catch(() => {});
+          })
+          .catch(() => {
+            setImagenFile(undefined);
+          });
         });
         
       } else {
@@ -78,9 +84,16 @@ const Ejercicios = () => {
 
         console.log(actual)
         
-        const response = await EjerciciosService.createWithImage(ejercicioNuevoConImagen);
-        const nuevo = response.data || { ...actual, idEjercicio: items.length + 1 };
-        setItems([...items, nuevo]);
+        const response = await EjerciciosService.createWithImage(ejercicioNuevoConImagen).then(() =>{
+          EjerciciosService.getAll()
+              .then(r => setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO")))
+              .catch(() => {
+                
+              });
+          }).catch(()=>{
+                setImagenFile(undefined);
+          });
+        
       }
       showSuccess('Ejercicio guardado');
     } catch (e) {

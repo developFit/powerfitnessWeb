@@ -79,10 +79,12 @@ const Alumnos = () => {
 
   const handleGuardar = async () => {
     try {
-      const response = await AlumnosService.create(nuevo);
-      const guardado = response.data || nuevo;
-      setItems([...items, guardado]);
-      showSuccess('Alumno guardado correctamente');
+      const response = await AlumnosService.create(nuevo).then(() => {
+        AlumnosService.getAll()
+          .then(r => setItems(r.data))
+          .catch(() => showError('Error al cargar alumnos'));
+          showSuccess('Alumno guardado correctamente');
+      });
     } catch (error) {
       showError('Error al guardar alumno');
     } finally {
