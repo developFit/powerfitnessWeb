@@ -59,7 +59,7 @@ const Ejercicios = () => {
   const handleGuardar = async () => {
     try {
       if (ejercicioAEditar?.idEjercicio) {
-        await EjerciciosService.update(ejercicioAEditar?.idEjercicio, ejercicioAEditar, imagenFile).then((resp) => {
+        await EjerciciosService.update(ejercicioAEditar?.idEjercicio, actual, imagenFile).then((resp) => {
           showSuccess(resp);
           setEjercicioAEditar(undefined)
           EjerciciosService.getAll()
@@ -81,8 +81,6 @@ const Ejercicios = () => {
           urlVideo: actual.urlVideo,
           imagen: imagenFile
         }
-
-        console.log(actual)
         
         const response = await EjerciciosService.createWithImage(ejercicioNuevoConImagen).then(() =>{
           EjerciciosService.getAll()
@@ -127,11 +125,26 @@ const Ejercicios = () => {
 
   const editarOCrearNombre = (valor: string) => {
     if (ejercicioAEditar) {
+      setActual({ ...actual, nombre: valor});
       setEjercicioAEditar({ ...ejercicioAEditar, nombre: valor })
     }
     else{
       setActual({ ...actual, nombre: valor});
     }
+  }
+
+  const resetForm = () => {
+    setOpen(false);
+    setActual({
+      idEjercicio: 0,
+      nombre: '',
+      explicacion: '',
+      urlVideo: '',
+      imagenUrl: '',
+      estadoEjercicio: ''
+    });
+    setEjercicioAEditar(undefined)
+    setImagenFile(undefined)
   }
 
   return (
@@ -168,7 +181,7 @@ const Ejercicios = () => {
                   <IconButton color="info" onClick={() => setDetalle(item)}>
                     <VisibilityIcon />
                   </IconButton>
-                  <IconButton color="primary" onClick={() => {setEjercicioAEditar(item); setOpen(true); }}>
+                  <IconButton color="primary" onClick={() => {setEjercicioAEditar(item); setOpen(true);}}>
                     <EditIcon />
                   </IconButton>
                   <IconButton color="error" onClick={() => handleEliminar(item.idEjercicio)}>
@@ -181,13 +194,14 @@ const Ejercicios = () => {
         </Table>
       </TableContainer>
 
-      <Dialog open={open} onClose={() => setOpen(false)}>
+      <Dialog open={open} onClose={resetForm}>
         <DialogTitle>{ejercicioAEditar?.idEjercicio ? 'Editar Ejercicio' : 'Nuevo Ejercicio'}</DialogTitle>
         <DialogContent>
           <TextField fullWidth margin="dense" label="Nombre" value={ejercicioAEditar?.nombre} onChange={(e) => {editarOCrearNombre(e.target.value)}} />
           <TextField fullWidth margin="dense" label="Explicación" value={ejercicioAEditar?.explicacion} onChange={e => {
             if (ejercicioAEditar) {
-              setEjercicioAEditar({ ...ejercicioAEditar, explicacion: e.target.value })
+              setEjercicioAEditar({ ...ejercicioAEditar, explicacion: e.target.value });
+              setActual({ ...actual, explicacion: e.target.value });
             }
             else{
               setActual({ ...actual, explicacion: e.target.value });
@@ -195,7 +209,8 @@ const Ejercicios = () => {
           }} />
           <TextField fullWidth margin="dense" label="URL Video" value={ejercicioAEditar?.urlVideo} onChange={e => {
             if (ejercicioAEditar) {
-              setEjercicioAEditar({ ...ejercicioAEditar, urlVideo: e.target.value })
+              setEjercicioAEditar({ ...ejercicioAEditar, urlVideo: e.target.value });
+              setActual({ ...actual, urlVideo: e.target.value });
             }
             else{
               setActual({ ...actual, urlVideo: e.target.value });
@@ -203,16 +218,26 @@ const Ejercicios = () => {
           }} />
             <Box mt={2}>
               <input type="file" accept="image/*" onChange={handleImagenChange} />
-              {imagenFile && (
+              {imagenFile ? (
                 <Box mt={1}>
                   <Typography variant="body2">Vista previa:</Typography>
                   <img src={URL.createObjectURL(imagenFile)} alt="Vista previa" width="100" height="100" style={{ objectFit: "cover" }} />
                 </Box>
-              )}
+                
+              )
+              :
+              ejercicioAEditar && (
+                <Box mt={1}>
+                  <Typography variant="body2">Vista previa:</Typography>
+                  <img src={ejercicioAEditar?.imagenUrl} alt="Vista previa" width="100" height="100" style={{ objectFit: "cover" }} />
+                </Box>
+              )
+            
+            }
             </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button onClick={ resetForm }>Cancelar</Button>
           <Button variant="contained" onClick={handleGuardar}>Guardar</Button>
         </DialogActions>
       </Dialog>
