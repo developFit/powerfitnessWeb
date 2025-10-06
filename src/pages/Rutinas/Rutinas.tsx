@@ -196,10 +196,11 @@ const Rutinas = () => {
 
 
   const handleEditar = (index: number, r: any) => {
-    console.log(index)
-    console.log(r)
+    //console.log(index)
+    //console.log(r)
     setEditingIndex(index);
     const current = itemsFiltrados[index];
+    console.log("CURRENT", current)
     setRutina(current);
     setOpen(true);
   };
@@ -232,25 +233,31 @@ const Rutinas = () => {
   };
 
   const handleExport = () => {
-    setEsExport(false);
-    const header = ['Alumno', 'Nombre', 'Objetivo', 'DiasPorSemana', "Estado de la rutina"];
-    const rows = itemsFiltrados.map(r => [
-      alumnos.find(a => a.idAlumno === r?.alumno?.idAlumno)?.nombre || r.idRutina,
-      r.nombre,
-      r.objetivo,
-      r.diasPorSemana,
-      r.estadoRutina
-    ]);
-    let csv = header.join(',') + '\n';
-    csv += rows.map(row => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'rutinas.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    if(alumnoSeleccionado){
+      setEsExport(false);
+      const header = ['Alumno', 'Nombre', 'Objetivo', 'DiasPorSemana', "Estado de la rutina"];
+      const rows = itemsFiltrados.map(r => [
+        alumnos.find(a => a.idAlumno === r?.alumno?.idAlumno)?.nombre || r.idRutina,
+        r.nombre,
+        r.objetivo,
+        r.diasPorSemana,
+        r.estadoRutina
+      ]);
+      let csv = header.join(',') + '\n';
+      csv += rows.map(row => row.join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'rutinas.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+    else{
+      showError('Debe seleccionar el alumno del cual quiere exportar la rutina');
+      setEsExport(false)
+    }
   };
 
   const handleCrearRutina = () => {
@@ -291,21 +298,29 @@ const Rutinas = () => {
     try {
       if (editingIndex !== null) {
         
-        const current = items[editingIndex] as any;
+        const current = itemsFiltrados[editingIndex] as any;
         
         if (current && current.idRutina) {
           console.log(payload)
-          await RutinasService.update(current.idRutina, payload);
+          await RutinasService.update(rutina.idRutina, payload).then(() => {
+             RutinasService.getAll()
+              .then(r =>{
+                setItems(r)
+                setItemsFiltrados(r.filter( (i: Rutina)=> i.estadoRutina == "ACTIVO"))
+              } )
+              .catch(() => {});
+            showSuccess('Rutina actualizada');
+          });
         }
-        const updated = current && current.id ? { ...payload, id: current.id } : payload;
-        showSuccess('Rutina actualizada');
+        //const updated = current && current.id ? { ...payload, id: current.id } : payload;
+        
       } else {
         const response = await RutinasService.create(payload);
         const nuevo = response.data || payload;
         RutinasService.getAll()
           .then(r =>{
             setItems(r)
-            setItemsFiltrados(r.filter( (i: Rutina)=> i.alumno.idAlumno == alumnoSeleccionado?.idAlumno))
+            setItemsFiltrados(r.filter( (i: Rutina)=> i.estadoRutina == "ACTIVO"))
           } )
           .catch(() => {});
         showSuccess('Rutina guardada correctamente');
@@ -323,7 +338,7 @@ const Rutinas = () => {
     setEsExport(false);
     const header = ['Alumno', 'Nombre', 'Objetivo', 'DiasPorSemana', "Estado de la rutina"];
     const rows = rutinasParaExportar.map(r => [
-      alumnos.find(a => a.idAlumno === r?.alumno?.idAlumno)?.nombre || r.idRutina,
+      r.alumno.nombre,
       r.nombre,
       r.objetivo,
       r.diasPorSemana,
@@ -339,6 +354,7 @@ const Rutinas = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setEsSeleccionMultiple(false);
   }
 
   const handlerCargarRutinasDeAlumno = (value: string) => {
@@ -382,6 +398,19 @@ const Rutinas = () => {
             </Select>
      
         <div style={{display: "flex", justifyContent: "space-between", gap: "10px"}}>
+          {alumnoSeleccionado && (
+            <Button onClick={() => {
+              setAlumnoSeleccionado(undefined)
+              RutinasService.getAll()
+              .then(r => {
+                setItems(r)
+                setItemsFiltrados(r.filter( (i: Rutina)=> i.estadoRutina == "ACTIVO"))
+              })
+              .catch(() => {});
+            }}>
+              Limpiar Filtro
+            </Button>
+          )}
           <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={() => {
             if(esSeleccionMultiple){
               handleExportSeleccionMultiple();
@@ -503,7 +532,7 @@ const Rutinas = () => {
             fullWidth
             label="Días por Semana"
             margin="dense"
-            value={rutina.diasPorSemana}
+            value={rutina.jornadasResponseDTO?.length}
             onChange={e => setRutina({ ...rutina, diasPorSemana: e.target.value })}
           />
           <div style={{display: "flex", justifyContent: "end"}}>
