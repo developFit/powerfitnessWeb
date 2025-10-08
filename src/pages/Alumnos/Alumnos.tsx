@@ -2,11 +2,17 @@ import React, { useEffect, useState } from "react";
 import {
   Box, Button, Dialog, DialogActions, DialogContent, DialogTitle,
   TextField, Typography, Paper, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Tabs, Tab, Avatar, Grid
+  TableContainer, TableHead, TableRow, Tabs, Tab, Avatar, Grid,
+  CircularProgress,
+  IconButton
 } from "@mui/material";
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import AlumnosService from "../../services/AlumnosService";
 import { showError, showSuccess } from "../../utils/alerts";
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import RutinasService from "../../services/RutinasService";
 
 interface Item {
   idAlumno: number;
@@ -24,6 +30,17 @@ interface Item {
   email?: string;
   username?: string;
   password?: string;
+}
+
+interface Rutina {
+  idRutina:number,
+  nivelRutina:string,
+  nombre:string,
+  objetivo:string,
+  diasPorSemana:string,
+  tiempo:string,
+  imagenUrl:string,
+  estadoRutina:string,
 }
 
 const Alumnos = () => {
@@ -49,11 +66,22 @@ const Alumnos = () => {
   });
   const [selectedAlumno, setSelectedAlumno] = useState<Item | null>(null);
   const [tabIndex, setTabIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSelectDisabled, setIsSelectDisabled] = useState<boolean>(false);
+  const [openEditAlumno, setOpenEditAlumno] = useState<boolean>(false);
+  const [rutinaDeAlumno, setRutinaDeAlumno] = useState<Rutina[]>([]);
 
   useEffect(() => {
+    cargarLoading();
     AlumnosService.getAll()
-      .then(r => setItems(r.data))
-      .catch(() => showError('Error al cargar alumnos'));
+      .then(r => {
+        setItems(r.data);
+        frenarLoading();
+      })
+      .catch(() => {
+        showError('Error al cargar alumnos');
+        frenarLoading();
+      });
   }, []);
 
   const handleOpenForm = () => {
@@ -79,23 +107,44 @@ const Alumnos = () => {
 
   const handleGuardar = async () => {
     try {
+      cargarLoading();
       const response = await AlumnosService.create(nuevo).then(() => {
         AlumnosService.getAll()
-          .then(r => setItems(r.data))
-          .catch(() => showError('Error al cargar alumnos'));
+          .then(r => {
+            setItems(r.data);
+            frenarLoading();
+          })
+          .catch(() => {
+            showError('Error al cargar alumnos');
+            frenarLoading();
+          });
           showSuccess('Alumno guardado correctamente');
       });
     } catch (error) {
       showError('Error al guardar alumno');
+      frenarLoading();
     } finally {
       setOpenForm(false);
     }
   };
 
   const handleVerDetalle = (alumno: Item) => {
-    setSelectedAlumno(alumno);
-    setOpenDetalle(true);
+    RutinasService.getByIdAlumno(alumno.idAlumno).then((resp) => {
+      setRutinaDeAlumno(resp);
+      setSelectedAlumno(alumno);
+      setOpenDetalle(true);
+    })
   };
+
+  const cargarLoading = () => {
+    setIsLoading(true)
+    setIsSelectDisabled(true)
+  }
+
+  const frenarLoading = () => {
+    setIsLoading(false)
+    setIsSelectDisabled(false)
+  }
 
   // Datos de ejemplo para mostrar la evolución de fuerza en press de banca
   const fuerzaData = [
@@ -104,6 +153,61 @@ const Alumnos = () => {
     { mes: "Mar", pressBanca: 70 },
     { mes: "Abr", pressBanca: 75 },
   ];
+
+  const handleEditar = (alumno: Item) => {
+    setNuevo({
+      idAlumno: 0,
+      tipoAlumno: "",
+      nombre: "",
+      objetivos: "",
+      nivelDeActividadFisica: "",
+      nombreCompleto: "",
+      telefono: "",
+      genero: "",
+      edad: "",
+      altura: "",
+      peso: "",
+      datosAdicionales: "",
+      email: "",
+      username: "",
+      password: "",
+    });
+    setSelectedAlumno(alumno);
+    setOpenEditAlumno(true)
+  }
+
+  const handleCloseEditar = () => {
+    setSelectedAlumno(null);
+    setOpenEditAlumno(false);
+  }
+
+  const handleGuardarEdicion = () => {
+    try {
+      if(selectedAlumno){
+        setItems([])
+        cargarLoading();
+        AlumnosService.update(selectedAlumno.idAlumno, selectedAlumno).then(() => {
+          showSuccess("Alumno actualizado con exito");
+          setOpenEditAlumno(false)
+          AlumnosService.getAll()
+          .then(r => {
+            setItems(r.data);
+            frenarLoading();
+          })
+          .catch(() => {
+            showError('Error al cargar alumnos');
+            frenarLoading();
+          });
+        })
+      }
+    } catch (error) {
+      
+    }
+  }
+
+  const handleEliminar = (alumno: Item) => {
+    console.log(alumno);
+  }
 
   return (
     <Box>
@@ -128,7 +232,15 @@ const Alumnos = () => {
                 <TableCell sx={{ color: "#fff" }}>{item.nombre}</TableCell>
                 <TableCell sx={{ color: "#fff" }}>{item.telefono}</TableCell>
                 <TableCell>
-                  <Button variant="outlined" color="warning" onClick={() => handleVerDetalle(item)}>Detalle</Button>
+                  <IconButton color="info" onClick={() => handleVerDetalle(item)}>
+                    <VisibilityIcon />
+                  </IconButton>
+                  <IconButton color="primary" onClick={() => handleEditar(item)}>
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton color="error" onClick={() => handleEliminar(item)}>
+                    <DeleteIcon />
+                  </IconButton>
                 </TableCell>
               </TableRow>
             ))}
@@ -203,8 +315,8 @@ const Alumnos = () => {
           )}
           {tabIndex === 2 && (
             <Box sx={{ mt: 2 }}>
-              <Typography color="orange">Objetivos: Ganar masa muscular</Typography>
-              <Typography color="orange">Rutina asignada: Rutina A</Typography>
+              <Typography color="orange">Objetivos: {selectedAlumno?.objetivos}</Typography>
+              <Typography color="orange">Rutina asignada: {rutinaDeAlumno[0]?.nombre}</Typography>
             </Box>
           )}
         </DialogContent>
@@ -212,6 +324,89 @@ const Alumnos = () => {
           <Button onClick={() => setOpenDetalle(false)} color="inherit">Cerrar</Button>
         </DialogActions>
       </Dialog>
+
+      {
+        isLoading && (
+          <div style={{ textAlign: "center", marginTop: "10px"}}>
+            <CircularProgress/>
+          </div>
+        )
+      }
+
+      <Dialog open={openEditAlumno}>
+        <DialogTitle>
+          Editar Alumno
+        </DialogTitle>
+        <DialogContent>
+          
+          <TextField fullWidth margin="dense" label="nombre" value={selectedAlumno?.nombre} 
+          onChange={(e) => {
+            if(nuevo && selectedAlumno){
+              setSelectedAlumno({...selectedAlumno, nombre: e.target.value});
+            }
+          }}></TextField>
+          <TextField fullWidth margin="dense" label="nombreCompleto" value={selectedAlumno?.nombreCompleto}
+          onChange={(e) => {
+            if(nuevo && selectedAlumno){
+              setSelectedAlumno({...selectedAlumno, nombreCompleto: e.target.value});
+            }
+          }}></TextField>
+          <TextField fullWidth margin="dense" label="genero" value={selectedAlumno?.genero}
+          onChange={(e) => {
+            if(nuevo && selectedAlumno){
+              setSelectedAlumno({...selectedAlumno, genero: e.target.value});
+            }
+          }}></TextField>
+          <TextField fullWidth margin="dense" type="number" label="telefono" value={selectedAlumno?.telefono}
+          onChange={(e) => {
+            if(nuevo && selectedAlumno){
+              setSelectedAlumno({...selectedAlumno, telefono: e.target.value});
+            }
+          }}></TextField>
+          <TextField fullWidth margin="dense" type="number" label="edad" value={selectedAlumno?.edad}
+          onChange={(e) => {
+            if(nuevo && selectedAlumno){
+              setSelectedAlumno({...selectedAlumno, edad: e.target.value});
+            }
+          }}></TextField>
+          <TextField fullWidth margin="dense" type="number" label="altura" value={selectedAlumno?.altura}
+          onChange={(e) => {
+            if(nuevo && selectedAlumno){
+              setSelectedAlumno({...selectedAlumno, altura: e.target.value});
+            }
+          }}></TextField>
+          <TextField fullWidth margin="dense" type="number" label="peso" value={selectedAlumno?.peso}
+          onChange={(e) => {
+            if(nuevo && selectedAlumno){
+              setSelectedAlumno({...selectedAlumno, peso: e.target.value});
+            }
+          }}></TextField>
+          <TextField fullWidth margin="dense" label="objetivos" value={selectedAlumno?.objetivos}
+          onChange={(e) => {
+            if(nuevo && selectedAlumno){
+              setSelectedAlumno({...selectedAlumno, objetivos: e.target.value});
+            }
+          }}></TextField>
+          <TextField fullWidth margin="dense" label="nivelDeActividadFisica" value={selectedAlumno?.nivelDeActividadFisica}
+          onChange={(e) => {
+            if(nuevo && selectedAlumno){
+              setSelectedAlumno({...selectedAlumno, nivelDeActividadFisica: e.target.value});
+            }
+          }}></TextField>
+          <TextField fullWidth margin="dense" label="datosAdicionales" value={selectedAlumno?.datosAdicionales}
+          onChange={(e) => {
+            if(nuevo && selectedAlumno){
+              setSelectedAlumno({...selectedAlumno, datosAdicionales: e.target.value});
+            }
+          }}></TextField>
+          
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEditar}>Cancelar</Button>
+          <Button variant="contained" onClick={handleGuardarEdicion}>Guardar</Button>
+        </DialogActions>
+      </Dialog>
+
     </Box>
   );
 };

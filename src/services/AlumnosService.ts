@@ -16,7 +16,11 @@ class AlumnosService {
   }
 
   update(id: number, data: any) {
-    return axios.put(`${API_URL}/${id}`, data);
+    try {
+      return axios.put(`/api/alumno/${id}`, data);
+    } catch (error) {
+      throw error;
+    }
   }
 
   delete(id: number) {

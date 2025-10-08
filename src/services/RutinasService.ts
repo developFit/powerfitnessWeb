@@ -29,7 +29,17 @@ class RutinasService {
       const response = await axios.delete(`/api/rutina/${id}`);
       return response.data;
     } catch (error) {
-      
+      throw error;
+    }
+  }
+
+  async getByIdAlumno(idAlumno: number){
+    try{
+      const response = await axios.get("/api/rutina/" + idAlumno);
+      return response.data;
+    }
+    catch (error){
+      throw error;
     }
   }
 }
