@@ -32,6 +32,7 @@ import AlumnosService from "../../services/AlumnosService";
 import EjerciciosService from "../../services/EjerciciosService";
 import { showError, showSuccess } from "../../utils/alerts";
 import { toNumberOrZero } from "../../utils/number";
+import CircularProgress from '@mui/material/CircularProgress';
 
 interface Alumno {
   idAlumno: number;
@@ -131,16 +132,22 @@ const Rutinas = () => {
   const [rutinasParaExportar, setRutinasParaExportar] = useState<Rutina[]>([])
   const [esExport, setEsExport] = useState<boolean>(false);
   const [esSeleccionMultiple, setEsSeleccionMultiple] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSelectDisabled, setIsSelectDisabled] = useState<boolean>(false);
 
   useEffect(() => {
+    cargarLoading()
     AlumnosService.getAll().then(r => setAlumnos(r.data));
     EjerciciosService.getAll().then(r => setEjercicios(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO")));
     RutinasService.getAll()
       .then(r => {
         setItems(r)
         setItemsFiltrados(r.filter( (i: Rutina)=> i.estadoRutina == "ACTIVO"))
+        frenarLoading()
       })
-      .catch(() => {});
+      .catch(() => {
+        frenarLoading()
+      });
   }, []);
 
   const handleAgregarDia = () => {
@@ -185,7 +192,7 @@ const Rutinas = () => {
   const handleEliminarEjercicio = (i: number, j: number) => {
     setRutina(prev => {
       const copy = { ...prev };
-      console.log(copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO[j])
+      //console.log(copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO[j])
       copy.jornadasResponseDTO = [...prev.jornadasResponseDTO];
       copy.jornadasResponseDTO[i] = { ...copy.jornadasResponseDTO[i] };
       copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO.splice(j,1)
@@ -200,13 +207,14 @@ const Rutinas = () => {
     //console.log(r)
     setEditingIndex(index);
     const current = itemsFiltrados[index];
-    console.log("CURRENT", current)
+    //console.log("CURRENT", current)
     setRutina(current);
     setOpen(true);
   };
 
   const handleEliminar = async (rutinaAEliminar: any) => {
     try {
+      cargarLoading()
       if (rutinaAEliminar && rutinaAEliminar.idRutina) {
         await RutinasService.delete(rutinaAEliminar.idRutina).then(() => {
           showSuccess('Rutina eliminada');
@@ -219,12 +227,16 @@ const Rutinas = () => {
             else{
               setItemsFiltrados(r.filter( (i: Rutina)=> i.estadoRutina == "ACTIVO"))
             }
+            frenarLoading()
           } )
-          .catch(() => {});
+          .catch(() => {
+            frenarLoading()
+          });
         });
       }
     } catch {
       showError('Error al eliminar rutina');
+      frenarLoading()
     }
   };
 
@@ -271,7 +283,9 @@ const Rutinas = () => {
   }
 
   const handleGuardar = async () => {
-
+    setOpen(false);
+    setItemsFiltrados([])
+    cargarLoading()
     const payload = {
       idAlumno: rutina.alumno.idAlumno,
       nombre: rutina.nombre,
@@ -301,14 +315,16 @@ const Rutinas = () => {
         const current = itemsFiltrados[editingIndex] as any;
         
         if (current && current.idRutina) {
-          console.log(payload)
           await RutinasService.update(rutina.idRutina, payload).then(() => {
              RutinasService.getAll()
               .then(r =>{
                 setItems(r)
                 setItemsFiltrados(r.filter( (i: Rutina)=> i.estadoRutina == "ACTIVO"))
+                frenarLoading();
               } )
-              .catch(() => {});
+              .catch(() => {
+                frenarLoading();
+              });
             showSuccess('Rutina actualizada');
           });
         }
@@ -319,16 +335,19 @@ const Rutinas = () => {
         const nuevo = response.data || payload;
         RutinasService.getAll()
           .then(r =>{
-            setItems(r)
-            setItemsFiltrados(r.filter( (i: Rutina)=> i.estadoRutina == "ACTIVO"))
+            setItems(r);
+            setItemsFiltrados(r.filter( (i: Rutina)=> i.estadoRutina == "ACTIVO"));
+            frenarLoading();
           } )
-          .catch(() => {});
+          .catch(() => {
+            frenarLoading();
+          });
         showSuccess('Rutina guardada correctamente');
       }
     } catch (error) {
       showError('Error al guardar rutina');
+      frenarLoading();
     } finally {
-      setOpen(false);
       setEditingIndex(null);
       setRutina(emptyRutina);
     }
@@ -357,10 +376,26 @@ const Rutinas = () => {
     setEsSeleccionMultiple(false);
   }
 
-  const handlerCargarRutinasDeAlumno = (value: string) => {
-    const alumnoEncontrado = alumnos.find(a => a.idAlumno.toString() == value);
-    setAlumnoSeleccionado(alumnoEncontrado);
+  const cargarLoading = () => {
+    setIsLoading(true)
+    setIsSelectDisabled(true)
+  }
+
+  const frenarLoading = () => {
+    setIsLoading(false)
+    setIsSelectDisabled(false)
+  }
+
+  const filtrarPorAlumno = async (value: string) => {
     setItemsFiltrados(items.filter(i => i.alumno.idAlumno.toString() == value && i.estadoRutina == "ACTIVO"))
+  }
+
+  const handlerCargarRutinasDeAlumno = (value: string) => {
+    filtrarPorAlumno(value).then(() => {
+      const alumnoEncontrado = alumnos.find(a => a.idAlumno.toString() == value);
+      setAlumnoSeleccionado(alumnoEncontrado);
+    })
+    
   }
 
   const ajustarParaSeleccionarVarios = () => {
@@ -374,6 +409,7 @@ const Rutinas = () => {
       <Box display="flex" gap={1} justifyContent={"space-between"}>
         
             <Select
+            disabled={isSelectDisabled}
             displayEmpty
             style={{width: "100%",  backgroundColor: "white", color: "black"}}
               value={alumnoSeleccionado?.idAlumno.toString() ?? ""}
@@ -399,19 +435,14 @@ const Rutinas = () => {
      
         <div style={{display: "flex", justifyContent: "space-between", gap: "10px"}}>
           {alumnoSeleccionado && (
-            <Button onClick={() => {
+            <Button disabled={isSelectDisabled} onClick={() => {
+              setItemsFiltrados(items.filter( (i: Rutina)=> i.estadoRutina == "ACTIVO"));
               setAlumnoSeleccionado(undefined)
-              RutinasService.getAll()
-              .then(r => {
-                setItems(r)
-                setItemsFiltrados(r.filter( (i: Rutina)=> i.estadoRutina == "ACTIVO"))
-              })
-              .catch(() => {});
             }}>
               Limpiar Filtro
             </Button>
           )}
-          <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={() => {
+          <Button disabled={isSelectDisabled} variant="outlined" startIcon={<FileDownloadIcon />} onClick={() => {
             if(esSeleccionMultiple){
               handleExportSeleccionMultiple();
             }
@@ -421,7 +452,7 @@ const Rutinas = () => {
           }}>
             {esSeleccionMultiple ? "Confirmar exportar" : "Exportar"}
           </Button>
-          <Button variant="contained" onClick={handleCrearRutina}>
+          <Button disabled={isSelectDisabled} variant="contained" onClick={handleCrearRutina}>
             <AddIcon></AddIcon>Crear Rutina
           </Button>
         </div>
@@ -779,7 +810,13 @@ const Rutinas = () => {
           </div>
         </DialogContent>
       </Dialog>
-
+      {
+        isLoading && (
+          <div style={{ textAlign: "center", marginTop: "10px"}}>
+            <CircularProgress/>
+          </div>
+        )
+      }
     </Box>
   );
 };

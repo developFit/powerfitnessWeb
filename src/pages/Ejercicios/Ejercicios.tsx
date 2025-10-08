@@ -15,7 +15,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  IconButton
+  IconButton,
+  CircularProgress
 } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -49,27 +50,42 @@ const Ejercicios = () => {
   const [ejercicioAEditar, setEjercicioAEditar] = useState<Ejercicio>();
 
   const [imagenFile, setImagenFile] = useState<File | undefined>(undefined);
-
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  
   useEffect(() => {
+    cargarLoading();
     EjerciciosService.getAll()
-      .then(r => setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO")))
-      .catch(() => {});
+      .then(r => {
+        setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO"));
+        frenarLoading();
+      })
+      .catch(() => {
+        frenarLoading();
+      });
   }, []);
 
   const handleGuardar = async () => {
     try {
+      cargarLoading();
       if (ejercicioAEditar?.idEjercicio) {
         await EjerciciosService.update(ejercicioAEditar?.idEjercicio, actual, imagenFile).then((resp) => {
           showSuccess(resp);
+          setItems([]);
           setEjercicioAEditar(undefined)
           EjerciciosService.getAll()
           .then(r => {
             EjerciciosService.getAll()
-              .then(r => setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO")))
-              .catch(() => {});
+              .then(r => {
+                setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO"));
+                frenarLoading();
+              })
+              .catch(() => {
+                frenarLoading();
+              });
           })
           .catch(() => {
             setImagenFile(undefined);
+            frenarLoading();
           });
         });
         
@@ -84,18 +100,23 @@ const Ejercicios = () => {
         
         const response = await EjerciciosService.createWithImage(ejercicioNuevoConImagen).then(() =>{
           EjerciciosService.getAll()
-              .then(r => setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO")))
+              .then(r => {
+                setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO"));
+                frenarLoading();
+              })
               .catch(() => {
-                
+                frenarLoading();
               });
           }).catch(()=>{
                 setImagenFile(undefined);
+                frenarLoading();
           });
         
       }
       showSuccess('Ejercicio guardado');
     } catch (e) {
       showError('Error al guardar ejercicio');
+      frenarLoading();
     } finally {
       setOpen(false);
       setActual({ idEjercicio: 0, nombre: '', explicacion: '', urlVideo: '', imagenUrl: '', estadoEjercicio: ''});
@@ -111,17 +132,32 @@ const Ejercicios = () => {
 
   const handleEliminar = async (idEjercicio: number) => {
     try {
+      cargarLoading();
       await EjerciciosService.delete(idEjercicio).then((resp) => {
         showSuccess(resp);
         EjerciciosService.getAll()
-        .then(r => setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO")))
-        .catch(() => {});
+        .then(r => {
+          setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO")); 
+          frenarLoading();
+        })
+        .catch(() => {
+          frenarLoading();
+        });
       });
       
     } catch {
       showError('Error al eliminar ejercicio');
+      frenarLoading();
     }
   };
+
+  const cargarLoading = () => {
+    setIsLoading(true)
+  }
+
+  const frenarLoading = () => {
+    setIsLoading(false)
+  }
 
   const editarOCrearNombre = (valor: string) => {
     if (ejercicioAEditar) {
@@ -257,6 +293,13 @@ const Ejercicios = () => {
           <Button onClick={() => setDetalle(null)}>Cerrar</Button>
         </DialogActions>
       </Dialog>
+      {
+        isLoading && (
+          <div style={{ textAlign: "center", marginTop: "10px"}}>
+            <CircularProgress/>
+          </div>
+        )
+      }
     </Box>
   );
 };
