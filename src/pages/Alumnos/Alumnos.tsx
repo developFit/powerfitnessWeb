@@ -30,6 +30,8 @@ interface Item {
   email?: string;
   username?: string;
   password?: string;
+  enabled?: boolean;
+  idUsuario: number;
 }
 
 interface Rutina {
@@ -63,6 +65,8 @@ const Alumnos = () => {
     email: "",
     username: "",
     password: "",
+    enabled: true,
+    idUsuario: 0
   });
   const [selectedAlumno, setSelectedAlumno] = useState<Item | null>(null);
   const [tabIndex, setTabIndex] = useState(0);
@@ -75,7 +79,7 @@ const Alumnos = () => {
     cargarLoading();
     AlumnosService.getAll()
       .then(r => {
-        setItems(r.data);
+        setItems(r.data.filter((a:any) => a.enabled));
         frenarLoading();
       })
       .catch(() => {
@@ -101,6 +105,8 @@ const Alumnos = () => {
       email: "",
       username: "",
       password: "",
+      enabled: true,
+      idUsuario: 0
     });
     setOpenForm(true);
   };
@@ -111,7 +117,7 @@ const Alumnos = () => {
       const response = await AlumnosService.create(nuevo).then(() => {
         AlumnosService.getAll()
           .then(r => {
-            setItems(r.data);
+            setItems(r.data.filter((a:any) => a.enabled));
             frenarLoading();
           })
           .catch(() => {
@@ -171,6 +177,8 @@ const Alumnos = () => {
       email: "",
       username: "",
       password: "",
+      enabled: true,
+      idUsuario: 0
     });
     setSelectedAlumno(alumno);
     setOpenEditAlumno(true)
@@ -191,7 +199,7 @@ const Alumnos = () => {
           setOpenEditAlumno(false)
           AlumnosService.getAll()
           .then(r => {
-            setItems(r.data);
+            setItems(r.data.filter((a:any) => a.enabled));
             frenarLoading();
           })
           .catch(() => {
@@ -206,7 +214,10 @@ const Alumnos = () => {
   }
 
   const handleEliminar = (alumno: Item) => {
-    console.log(alumno);
+    console.log(alumno.idUsuario);
+    AlumnosService.delete(alumno.idUsuario).then((resp) => {
+      console.log(resp)
+    })
   }
 
   return (

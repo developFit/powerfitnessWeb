@@ -7,6 +7,7 @@ import {
   Typography,
   Select,
   MenuItem,
+  CircularProgress,
 } from "@mui/material";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import FastfoodIcon from "@mui/icons-material/Fastfood";
@@ -29,6 +30,9 @@ import {
 } from "recharts";
 import UsuarioService from "../../services/UsuarioService";
 import AuthService from "../../services/AuthService";
+import AlumnosService from "../../services/AlumnosService";
+import RutinasService from "../../services/RutinasService";
+import PlanesNutricionalesService from "../../services/PlanesNutricionalesService";
 
 const StatCard = ({
   title,
@@ -85,12 +89,37 @@ const dataSocios = [
 const Home = () => {
 
   const [datosUsuario, setDatosUsuario] = useState<any>();
+  const [alumnos, setAlumnos] = useState<any[]>();
+  const [rutinasCreadas, setRutinasCreadas] = useState<any[]>();
+  const [planesNutricionales, setPlanesNutricionales] = useState<any[]>()
 
   useEffect(() => {
+    cargarAlumnosActivos();
+    cargarRutinasCreadas();
+    cargarPlanesNutricionales();
     UsuarioService.getById(Number(AuthService.getUserId())).then((resp) => {
       setDatosUsuario(resp);
     })
   },[])
+
+  const cargarAlumnosActivos = async () => {
+   await AlumnosService.getAll().then((resp) => {
+      //setAlumnos(resp.data.filter((r:any) => r.estadoAlumno == "ACTIVO"));
+      setAlumnos(resp.data);
+    })
+  }
+
+  const cargarRutinasCreadas = async () => {
+    await RutinasService.getAll().then((r:any) => {
+      setRutinasCreadas(r.filter((rutina: any) => rutina.estadoRutina == "ACTIVO"))
+    })
+  }
+
+  const cargarPlanesNutricionales = async () => {
+    await PlanesNutricionalesService.getAll().then((resp: any) => {
+      setPlanesNutricionales(resp);
+    })
+  }
 
   return (
     <Box sx={{ flexGrow: 1, backgroundColor: "#000", minHeight: "100vh", p: 2 }}>
@@ -102,28 +131,29 @@ const Home = () => {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Alumnos Activos"
-            value="128"
+            value={alumnos?.length.toString() || <CircularProgress style={{color: "#FFA726"}}/>}
             icon={<GroupIcon fontSize="large" htmlColor="#FFA726" />}
+            
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Rutinas Creadas"
-            value="45"
+            value={rutinasCreadas?.length.toString() || <CircularProgress style={{color: "#FFA726"}}/>}
             icon={<FitnessCenterIcon fontSize="large" htmlColor="#FFA726" />}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Platos Nutricionales"
-            value="76"
+            value={planesNutricionales?.length.toString() || <CircularProgress style={{color: "#FFA726"}}/>}
             icon={<FastfoodIcon fontSize="large" htmlColor="#FFA726" />}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Ingresos del Mes"
-            value="$152,000"
+            value={<p style={{margin: "0", fontSize: "25px"}}>Proximamente</p>}
             icon={<MonetizationOnIcon fontSize="large" htmlColor="#FFA726" />}
           />
         </Grid>

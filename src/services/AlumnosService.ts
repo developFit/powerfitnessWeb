@@ -4,7 +4,7 @@ const API_URL = "/api/alumnos";
 
 class AlumnosService {
   getAll() {
-    return axios.get(API_URL);
+    return axios.get("/api/obtenerAlumnosConUsuario");
   }
 
   getById(id: number) {
@@ -23,8 +23,13 @@ class AlumnosService {
     }
   }
 
-  delete(id: number) {
-    return axios.delete(`${API_URL}/${id}`);
+  async delete(idUsuario: number) {
+    try {
+      const response = await axios.delete(`/api/eliminarAlumno/${idUsuario}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 }
 
