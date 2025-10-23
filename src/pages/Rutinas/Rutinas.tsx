@@ -58,8 +58,8 @@ interface Ejercicio {
 interface EjercicioRutina {
   idEjercicioDeRutina: number | string;
   grupoMuscular: string;
-  rondas: number | undefined;
-  repeticiones: number | undefined;
+  rondas: string | undefined;
+  repeticiones: string | undefined;
   carga: string;
   observaciones: string;
   ejercicio: EjercicioItem
@@ -659,7 +659,7 @@ const Rutinas = () => {
                     margin="dense"
                     value={ej.rondas}
                     onChange={e => {
-                      const val = Number(e.target.value);
+                      const val = e.target.value;
                       setRutina(prev => {
                         const copy = { ...prev };
                         copy.jornadasResponseDTO = [...prev.jornadasResponseDTO];
@@ -679,7 +679,7 @@ const Rutinas = () => {
                     margin="dense"
                     value={ej.repeticiones}
                     onChange={e => {
-                      const val = Number(e.target.value);
+                      const val = e.target.value;
                       setRutina(prev => {
                         const copy = { ...prev };
                         copy.jornadasResponseDTO[i].ejerciciosDeRutinaResponseDTO[j] = {
