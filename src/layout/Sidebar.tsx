@@ -26,7 +26,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { Link } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
 import { AddTask } from "@mui/icons-material";
-import logo from "../assets/logo.svg";
+import logo from "../assets/logo.png";
 
 const drawerWidth = 240;
 
@@ -41,8 +41,8 @@ const SidebarResponsive = () => {
 
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: "center" }}>
-      <Toolbar sx={{ display: "flex", justifyContent: "center" }}>
-        <img src={logo} alt="Logo" style={{ height: 40 }} />
+      <Toolbar sx={{ display: "flex", justifyContent: "center", backgroundColor: "white"}}>
+        <img src={logo} alt="Logo" style={{ height: 100 }} />
       </Toolbar>
       <List>
         <ListItem button component={Link} to="/">
@@ -53,9 +53,9 @@ const SidebarResponsive = () => {
           <ListItemIcon><PeopleIcon sx={{ color: "#FFA726" }} /></ListItemIcon>
           <ListItemText primary="Alumnos" primaryTypographyProps={{ sx: { color: "#ffff" } }} />
         </ListItem>
-        <ListItem button component={Link} to="/ConfiguracionAlumnos">
+        <ListItem button component={Link} to="/validarRutinas">
           <ListItemIcon><AddTask sx={{ color: "#FFA726" }} /></ListItemIcon>
-          <ListItemText primary="ValidarRutinas" primaryTypographyProps={{ sx: { color: "#ffff" } }} />
+          <ListItemText primary="Validar rutinas" primaryTypographyProps={{ sx: { color: "#ffff" } }} />
         </ListItem>
         <ListItem button component={Link} to="/rutinas">
           <ListItemIcon><FitnessCenterIcon sx={{ color: "#FFA726" }} /></ListItemIcon>

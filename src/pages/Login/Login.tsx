@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Box, Button, Card, CardContent, TextField, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import AuthService from '../../services/AuthService';
-import logo from '../../assets/logo.svg';
+import logo from '../../assets/logo.png';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -19,9 +19,9 @@ const Login = () => {
 
       // Si el login es exitoso redirigimos al inicio protegido
       navigate('/');
-    } catch (err) {
+    } catch (err: any) {
       // Si algo falla mostramos un mensaje de error
-      const message = err instanceof Error ? err.message : 'Credenciales incorrectas';
+      const message = err ? err.response.data.detail : 'Credenciales incorrectas';
       setError(message);
     }
   };

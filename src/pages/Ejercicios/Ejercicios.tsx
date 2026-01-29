@@ -25,11 +25,13 @@ import EjerciciosService from "../../services/EjerciciosService";
 import { showError, showSuccess } from "../../utils/alerts";
 
 interface Ejercicio {
-  id: number;
+  idEjercicio: number;
   nombre: string;
   explicacion: string;
   urlVideo: string;
-  imagen?: string;
+  imagenUrl?: string;
+  imagen?: File,
+  estadoEjercicio: string;
 }
 
 const Ejercicios = () => {
@@ -37,77 +39,139 @@ const Ejercicios = () => {
   const [open, setOpen] = useState(false);
   const [detalle, setDetalle] = useState<Ejercicio | null>(null);
   const [actual, setActual] = useState<Ejercicio>({
-    id: 0,
+    idEjercicio: 0,
     nombre: '',
     explicacion: '',
     urlVideo: '',
-    imagen: ''
+    imagenUrl: '',
+    estadoEjercicio: ''
   });
+  const [ejercicioAEditar, setEjercicioAEditar] = useState<Ejercicio>();
+
+  const [imagenFile, setImagenFile] = useState<File | undefined>(undefined);
 
   useEffect(() => {
     EjerciciosService.getAll()
-      .then(r => setItems(r.data))
+      .then(r => setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO")))
       .catch(() => {});
   }, []);
 
   const handleGuardar = async () => {
     try {
-      if (actual.id) {
-        await EjerciciosService.update(actual.id, actual);
-        setItems(items.map(i => (i.id === actual.id ? actual : i)));
+      if (ejercicioAEditar?.idEjercicio) {
+        await EjerciciosService.update(ejercicioAEditar?.idEjercicio, ejercicioAEditar, imagenFile).then((resp) => {
+          showSuccess(resp);
+          setEjercicioAEditar(undefined)
+          EjerciciosService.getAll()
+          .then(r => {
+            EjerciciosService.getAll()
+              .then(r => setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO")))
+              .catch(() => {});
+          })
+          .catch(() => {
+            setImagenFile(undefined);
+          });
+        });
+        
       } else {
-        const response = await EjerciciosService.create(actual);
-        const nuevo = response.data || { ...actual, id: items.length + 1 };
-        setItems([...items, nuevo]);
+        
+        const ejercicioNuevoConImagen = {
+          nombre: actual.nombre,
+          explicacion: actual.explicacion,
+          urlVideo: actual.urlVideo,
+          imagen: imagenFile
+        }
+
+        console.log(actual)
+        
+        const response = await EjerciciosService.createWithImage(ejercicioNuevoConImagen).then(() =>{
+          EjerciciosService.getAll()
+              .then(r => setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO")))
+              .catch(() => {
+                
+              });
+          }).catch(()=>{
+                setImagenFile(undefined);
+          });
+        
       }
       showSuccess('Ejercicio guardado');
     } catch (e) {
       showError('Error al guardar ejercicio');
     } finally {
       setOpen(false);
-      setActual({ id: 0, nombre: '', explicacion: '', urlVideo: '', imagen: '' });
+      setActual({ idEjercicio: 0, nombre: '', explicacion: '', urlVideo: '', imagenUrl: '', estadoEjercicio: ''});
     }
   };
 
-  const handleEliminar = async (id: number) => {
+  const handleImagenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImagenFile(file);
+    }
+  };
+
+  const handleEliminar = async (idEjercicio: number) => {
     try {
-      await EjerciciosService.delete(id);
-      setItems(items.filter(i => i.id !== id));
-      showSuccess('Ejercicio eliminado');
+      await EjerciciosService.delete(idEjercicio).then((resp) => {
+        showSuccess(resp);
+        EjerciciosService.getAll()
+        .then(r => setItems(r.filter((e:Ejercicio) => e.estadoEjercicio == "ACTIVO")))
+        .catch(() => {});
+      });
+      
     } catch {
       showError('Error al eliminar ejercicio');
     }
   };
 
+  const editarOCrearNombre = (valor: string) => {
+    if (ejercicioAEditar) {
+      setEjercicioAEditar({ ...ejercicioAEditar, nombre: valor })
+    }
+    else{
+      setActual({ ...actual, nombre: valor});
+    }
+  }
+
   return (
     <Box>
       <Typography variant="h5" gutterBottom>Gestión de Ejercicios</Typography>
-      <Button variant="contained" color="warning" startIcon={<AddIcon />} onClick={() => setOpen(true)}>
-        Nuevo Ejercicio
-      </Button>
+      <div style={{
+        display: "flex",
+        justifyContent: "end"
+      }}>
+        <Button variant="contained" color="warning" startIcon={<AddIcon />} onClick={() => setOpen(true)}>
+          Nuevo Ejercicio
+        </Button>
+      </div>
 
       <TableContainer component={Paper} sx={{ mt: 2 }}>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>ID</TableCell>
-              <TableCell>Nombre</TableCell>
+              <TableCell>Ejercicio</TableCell>
+              <TableCell>Imagen</TableCell>
               <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {items.map(item => (
-              <TableRow key={item.id}>
-                <TableCell>{item.id}</TableCell>
+              <TableRow key={item.idEjercicio}>
+                <TableCell>{item.idEjercicio}</TableCell>
                 <TableCell>{item.nombre}</TableCell>
+                <TableCell>
+                  <img src={item.imagenUrl} alt="" width={200} height={200} style={{objectFit: "contain"}}/>
+                </TableCell>
                 <TableCell>
                   <IconButton color="info" onClick={() => setDetalle(item)}>
                     <VisibilityIcon />
                   </IconButton>
-                  <IconButton color="primary" onClick={() => { setActual(item); setOpen(true); }}>
+                  <IconButton color="primary" onClick={() => {setEjercicioAEditar(item); setOpen(true); }}>
                     <EditIcon />
                   </IconButton>
-                  <IconButton color="error" onClick={() => handleEliminar(item.id)}>
+                  <IconButton color="error" onClick={() => handleEliminar(item.idEjercicio)}>
                     <DeleteIcon />
                   </IconButton>
                 </TableCell>
@@ -118,12 +182,34 @@ const Ejercicios = () => {
       </TableContainer>
 
       <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>{actual.id ? 'Editar Ejercicio' : 'Nuevo Ejercicio'}</DialogTitle>
+        <DialogTitle>{ejercicioAEditar?.idEjercicio ? 'Editar Ejercicio' : 'Nuevo Ejercicio'}</DialogTitle>
         <DialogContent>
-          <TextField fullWidth margin="dense" label="Nombre" value={actual.nombre} onChange={e => setActual({ ...actual, nombre: e.target.value })} />
-          <TextField fullWidth margin="dense" label="Explicación" value={actual.explicacion} onChange={e => setActual({ ...actual, explicacion: e.target.value })} />
-          <TextField fullWidth margin="dense" label="URL Video" value={actual.urlVideo} onChange={e => setActual({ ...actual, urlVideo: e.target.value })} />
-          <TextField fullWidth margin="dense" label="Imagen" value={actual.imagen} onChange={e => setActual({ ...actual, imagen: e.target.value })} />
+          <TextField fullWidth margin="dense" label="Nombre" value={ejercicioAEditar?.nombre} onChange={(e) => {editarOCrearNombre(e.target.value)}} />
+          <TextField fullWidth margin="dense" label="Explicación" value={ejercicioAEditar?.explicacion} onChange={e => {
+            if (ejercicioAEditar) {
+              setEjercicioAEditar({ ...ejercicioAEditar, explicacion: e.target.value })
+            }
+            else{
+              setActual({ ...actual, explicacion: e.target.value });
+            }
+          }} />
+          <TextField fullWidth margin="dense" label="URL Video" value={ejercicioAEditar?.urlVideo} onChange={e => {
+            if (ejercicioAEditar) {
+              setEjercicioAEditar({ ...ejercicioAEditar, urlVideo: e.target.value })
+            }
+            else{
+              setActual({ ...actual, urlVideo: e.target.value });
+            }
+          }} />
+            <Box mt={2}>
+              <input type="file" accept="image/*" onChange={handleImagenChange} />
+              {imagenFile && (
+                <Box mt={1}>
+                  <Typography variant="body2">Vista previa:</Typography>
+                  <img src={URL.createObjectURL(imagenFile)} alt="Vista previa" width="100" height="100" style={{ objectFit: "cover" }} />
+                </Box>
+              )}
+            </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancelar</Button>
@@ -134,12 +220,12 @@ const Ejercicios = () => {
       <Dialog open={Boolean(detalle)} onClose={() => setDetalle(null)}>
         <DialogTitle>{detalle?.nombre}</DialogTitle>
         <DialogContent>
-          <Typography gutterBottom>{detalle?.explicacion}</Typography>
+          <Typography gutterBottom><strong>Detalle: </strong>{detalle?.explicacion}</Typography>
           {detalle?.urlVideo && (
-            <Typography gutterBottom>Video: <a href={detalle.urlVideo} target="_blank" rel="noreferrer">{detalle.urlVideo}</a></Typography>
+            <Typography gutterBottom><strong>Video: </strong> <a href={detalle.urlVideo} target="_blank" rel="noreferrer">{detalle.urlVideo}</a></Typography>
           )}
           {detalle?.imagen && (
-            <Box component="img" src={detalle.imagen} alt={detalle.nombre} sx={{ width: '100%', mt: 1 }} />
+            <Box component="img" src={detalle.imagenUrl} alt={detalle.nombre} sx={{ width: '100%', mt: 1 }} />
           )}
         </DialogContent>
         <DialogActions>

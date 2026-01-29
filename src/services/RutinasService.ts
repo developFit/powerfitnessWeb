@@ -3,8 +3,13 @@ import axios from "./api";
 const API_URL = "/api/rutinas";
 
 class RutinasService {
-  getAll() {
-    return axios.get(API_URL);
+  async getAll() {
+    try {
+      const response = await axios.get(API_URL);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 
   getById(id: number) {
@@ -16,11 +21,16 @@ class RutinasService {
   }
 
   update(id: number, data: any) {
-    return axios.put(`${API_URL}/${id}`, data);
+    return axios.put(`/api/rutina/${id}`, data);
   }
 
-  delete(id: number) {
-    return axios.delete(`${API_URL}/${id}`);
+  async delete(id: number) {
+    try {
+      const response = await axios.delete(`/api/rutina/${id}`);
+      return response.data;
+    } catch (error) {
+      
+    }
   }
 }
 

@@ -9,7 +9,7 @@ const ProtectedLayout = () => {
   const role = AuthService.getRole();
 
   // Si no existe token o el rol no es admin redirigimos a la pantalla de ingreso
-  if (!token || role !== 'admin') {
+  if (!token || role === 'ROLE_ALUMNO') {
     return <Navigate to="/login" replace />;
   }
   return (
